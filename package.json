@@ -43,5 +43,8 @@
     "next": {
       "postcss": "$postcss"
     }
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.63.1"
   }
 }
