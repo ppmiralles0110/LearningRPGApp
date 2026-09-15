@@ -1,0 +1,25 @@
+{
+  "name": "LevelUp Architect",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "LevelUp Architect",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "postCreateCommand": "npm ci",
+  "containerEnv": {
+    "DATABASE_PATH": "./data/levelup-architect.db",
+    "AUTH_SECRET": "codespaces-local-development-secret-change-me"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
+}

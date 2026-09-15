@@ -1,0 +1,35 @@
+name: Feature request
+description: Propose a learner, reviewer, or administrator capability.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What learner or operator problem should be solved?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe measurable behavior rather than implementation details.
+    validations:
+      required: true
+  - type: dropdown
+    id: persona
+    attributes:
+      label: Primary persona
+      options:
+        - Learner
+        - Content reviewer
+        - Administrator
+        - Organization leader
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and alternatives
+      description: User feedback, examples, alternatives considered, or relevant standards.
