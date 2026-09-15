@@ -14,7 +14,7 @@ const themeScript = `
   (() => {
     const param = new URLSearchParams(window.location.search).get("scoutTheme");
     const theme =
-      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      param || window.localStorage.getItem("levelup-theme") || "dark";
     document.documentElement.setAttribute("data-theme", theme);
   })();
 `;

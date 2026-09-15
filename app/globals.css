@@ -65,9 +65,41 @@ html {
 
 body {
   min-height: 100vh;
-  background: var(--cp-bg);
+  background:
+    radial-gradient(
+      circle at 78% 8%,
+      color-mix(in srgb, var(--cp-accent) 12%, transparent),
+      transparent 32rem
+    ),
+    radial-gradient(
+      circle at 12% 82%,
+      color-mix(in srgb, var(--cp-link) 9%, transparent),
+      transparent 28rem
+    ),
+    var(--cp-bg);
   color: var(--cp-text);
   font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--cp-border) 35%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--cp-border) 35%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 48px 48px;
+  content: "";
+  mask-image: linear-gradient(to bottom, var(--cp-overlay), transparent 75%);
+  opacity: 0.22;
+  pointer-events: none;
 }
 
 ::selection {
@@ -81,42 +113,522 @@ body {
 
 @layer components {
   .card {
-    @apply rounded-card border p-5 shadow-card;
-    background: var(--cp-surface);
+    @apply relative overflow-hidden border p-5 shadow-card;
+    background:
+      linear-gradient(
+        135deg,
+        var(--cp-sheen),
+        transparent 28%,
+        transparent 72%,
+        var(--cp-highlight)
+      ),
+      var(--cp-surface);
+    border-color: color-mix(in srgb, var(--cp-border) 72%, var(--cp-accent));
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--cp-border) 78%, transparent) inset,
+      0 14px 36px color-mix(in srgb, var(--cp-bg) 72%, transparent);
+    clip-path: polygon(
+      12px 0,
+      calc(100% - 12px) 0,
+      100% 12px,
+      100% calc(100% - 12px),
+      calc(100% - 12px) 100%,
+      12px 100%,
+      0 calc(100% - 12px),
+      0 12px
+    );
+    isolation: isolate;
+  }
+
+  .card::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(var(--cp-accent), var(--cp-accent)) left 8px top / 34px 2px no-repeat,
+      linear-gradient(var(--cp-accent), var(--cp-accent)) left top 8px / 2px 34px no-repeat,
+      linear-gradient(var(--cp-accent), var(--cp-accent)) right 8px bottom / 34px 2px no-repeat,
+      linear-gradient(var(--cp-accent), var(--cp-accent)) right bottom 8px / 2px 34px no-repeat;
+    content: "";
+    opacity: 0.45;
+    pointer-events: none;
   }
 
   .button-primary {
-    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-control px-4 py-2 text-sm font-semibold transition;
+    @apply inline-flex min-h-10 items-center justify-center gap-2 px-5 py-2 text-xs font-bold uppercase tracking-[0.1em] transition;
     background: var(--cp-accent);
     color: var(--cp-accent-fg);
+    clip-path: polygon(
+      8px 0,
+      calc(100% - 8px) 0,
+      100% 8px,
+      100% calc(100% - 8px),
+      calc(100% - 8px) 100%,
+      8px 100%,
+      0 calc(100% - 8px),
+      0 8px
+    );
+    box-shadow: 0 0 22px color-mix(in srgb, var(--cp-accent) 32%, transparent);
   }
 
   .button-primary:hover {
     background: var(--cp-accent-hover);
+    filter: brightness(1.08);
+    transform: translateY(-1px);
   }
 
   .button-secondary {
-    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-control border px-4 py-2 text-sm font-semibold transition;
-    background: var(--cp-surface);
+    @apply inline-flex min-h-10 items-center justify-center gap-2 border px-5 py-2 text-xs font-bold uppercase tracking-[0.1em] transition;
+    background:
+      linear-gradient(135deg, var(--cp-sheen), transparent 48%),
+      var(--cp-surface);
     color: var(--cp-text);
+    clip-path: polygon(
+      8px 0,
+      calc(100% - 8px) 0,
+      100% 8px,
+      100% calc(100% - 8px),
+      calc(100% - 8px) 100%,
+      8px 100%,
+      0 calc(100% - 8px),
+      0 8px
+    );
   }
 
   .button-secondary:hover {
-    background: var(--cp-surface-soft);
+    background: var(--cp-accent-soft);
+    border-color: var(--cp-accent);
+    color: var(--cp-accent);
+    transform: translateY(-1px);
   }
 
   .input {
-    @apply min-h-11 w-full rounded-control border px-3 py-2 text-sm;
-    background: var(--cp-surface);
+    @apply min-h-11 w-full border px-3 py-2 text-sm;
+    background:
+      linear-gradient(135deg, var(--cp-highlight), transparent 35%),
+      var(--cp-surface);
     color: var(--cp-text);
+    clip-path: polygon(
+      6px 0,
+      calc(100% - 6px) 0,
+      100% 6px,
+      100% calc(100% - 6px),
+      calc(100% - 6px) 100%,
+      6px 100%,
+      0 calc(100% - 6px),
+      0 6px
+    );
+    box-shadow: 0 0 0 1px var(--cp-bg) inset;
   }
 
   .eyebrow {
-    @apply text-xs font-bold uppercase tracking-[0.16em];
+    @apply flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.22em];
     color: var(--cp-accent);
+  }
+
+  .eyebrow::before {
+    width: 0.5rem;
+    height: 0.5rem;
+    background: currentColor;
+    box-shadow: 0 0 12px currentColor;
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    content: "";
+    flex: none;
   }
 
   .muted {
     color: var(--cp-text-muted);
+  }
+
+  .rpg-shell {
+    position: relative;
+  }
+
+  .rpg-sidebar {
+    background:
+      linear-gradient(
+        180deg,
+        var(--cp-accent-soft),
+        transparent 18%,
+        transparent 78%,
+        var(--cp-highlight)
+      ),
+      var(--cp-bg-elevated);
+    box-shadow: 12px 0 42px color-mix(in srgb, var(--cp-bg) 78%, transparent);
+  }
+
+  .rpg-brand-mark {
+    position: relative;
+    border: 1px solid color-mix(in srgb, var(--cp-accent) 65%, var(--cp-border));
+    background:
+      radial-gradient(circle, var(--cp-accent), var(--cp-accent-hover));
+    color: var(--cp-accent-fg);
+    clip-path: polygon(50% 0, 92% 22%, 92% 74%, 50% 100%, 8% 74%, 8% 22%);
+    filter: drop-shadow(0 0 10px var(--cp-accent-soft));
+  }
+
+  .rpg-brand-title {
+    @apply text-lg font-black uppercase tracking-[0.08em];
+    text-shadow: 0 0 18px var(--cp-highlight);
+  }
+
+  .rpg-side-label {
+    @apply hidden text-[0.62rem] font-black uppercase tracking-[0.24em] lg:block;
+    color: var(--cp-text-muted);
+  }
+
+  .rpg-nav-item {
+    position: relative;
+    border: 1px solid transparent;
+    clip-path: polygon(
+      8px 0,
+      100% 0,
+      100% calc(100% - 8px),
+      calc(100% - 8px) 100%,
+      0 100%,
+      0 8px
+    );
+  }
+
+  .rpg-nav-item:hover {
+    border-color: var(--cp-border);
+    background: var(--cp-surface-soft);
+    color: var(--cp-text) !important;
+  }
+
+  .rpg-nav-item[aria-current="page"] {
+    border-color: color-mix(in srgb, var(--cp-accent) 65%, var(--cp-border));
+    box-shadow: 4px 0 0 var(--cp-accent) inset;
+  }
+
+  .rpg-player-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--cp-border);
+    padding: 0.875rem;
+    background:
+      linear-gradient(135deg, var(--cp-highlight), transparent 58%),
+      var(--cp-surface);
+    clip-path: polygon(
+      9px 0,
+      100% 0,
+      100% calc(100% - 9px),
+      calc(100% - 9px) 100%,
+      0 100%,
+      0 9px
+    );
+  }
+
+  .rpg-player-avatar {
+    border: 1px solid var(--cp-accent);
+    background: var(--cp-accent-soft);
+    color: var(--cp-accent);
+    box-shadow: 0 0 18px var(--cp-accent-soft);
+  }
+
+  .rpg-page {
+    animation: campaign-enter 320ms ease-out both;
+  }
+
+  .rpg-hero {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--cp-accent) 60%, var(--cp-border));
+    padding: clamp(1.25rem, 3vw, 2rem);
+    background:
+      linear-gradient(115deg, var(--cp-panel-strong), var(--cp-panel)),
+      var(--cp-surface);
+    clip-path: polygon(
+      18px 0,
+      calc(100% - 18px) 0,
+      100% 18px,
+      100% calc(100% - 18px),
+      calc(100% - 18px) 100%,
+      18px 100%,
+      0 calc(100% - 18px),
+      0 18px
+    );
+    box-shadow:
+      0 18px 50px color-mix(in srgb, var(--cp-bg) 72%, transparent),
+      0 0 42px var(--cp-accent-soft) inset;
+  }
+
+  .rpg-hero::after {
+    position: absolute;
+    width: 16rem;
+    height: 16rem;
+    right: -4rem;
+    top: -6rem;
+    border: 1px solid var(--cp-accent);
+    border-radius: 9999px;
+    box-shadow:
+      0 0 0 2rem var(--cp-highlight),
+      0 0 0 4rem color-mix(in srgb, var(--cp-accent) 5%, transparent);
+    content: "";
+    opacity: 0.22;
+    pointer-events: none;
+  }
+
+  .rpg-title {
+    @apply font-black uppercase tracking-[-0.025em];
+    text-wrap: balance;
+    text-shadow: 0 0 24px var(--cp-highlight);
+  }
+
+  .rpg-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--cp-border);
+    padding: 0.3rem 0.6rem;
+    background: var(--cp-surface-soft);
+    color: var(--cp-text-muted);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  }
+
+  .rpg-level-card {
+    @apply relative overflow-hidden border p-6;
+    background:
+      radial-gradient(
+        circle at 86% 12%,
+        var(--cp-accent-soft),
+        transparent 36%
+      ),
+      linear-gradient(135deg, var(--cp-panel-strong), var(--cp-surface));
+    border-color: var(--cp-accent);
+    clip-path: polygon(
+      14px 0,
+      calc(100% - 14px) 0,
+      100% 14px,
+      100% calc(100% - 14px),
+      calc(100% - 14px) 100%,
+      14px 100%,
+      0 calc(100% - 14px),
+      0 14px
+    );
+    box-shadow:
+      0 0 0 1px var(--cp-bg) inset,
+      0 0 32px var(--cp-accent-soft);
+  }
+
+  .rpg-level-number {
+    @apply font-black tabular-nums tracking-[-0.06em];
+    font-size: clamp(2.6rem, 7vw, 4.6rem);
+    line-height: 0.86;
+    color: var(--cp-accent);
+    text-shadow: 0 0 26px var(--cp-accent-soft);
+  }
+
+  .rpg-icon-frame {
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--cp-accent);
+    background: var(--cp-accent-soft);
+    color: var(--cp-accent);
+    clip-path: polygon(50% 0, 96% 25%, 96% 75%, 50% 100%, 4% 75%, 4% 25%);
+    filter: drop-shadow(0 0 8px var(--cp-accent-soft));
+  }
+
+  .rpg-stat-card:hover,
+  .rpg-quest-card:hover,
+  .rpg-cert-card:hover {
+    border-color: var(--cp-accent);
+    transform: translateY(-2px);
+    transition:
+      border-color 160ms ease,
+      transform 160ms ease;
+  }
+
+  .rpg-quest-card {
+    border-color: color-mix(in srgb, var(--cp-accent) 45%, var(--cp-border));
+  }
+
+  .rpg-quest-row {
+    position: relative;
+    border-left: 3px solid var(--cp-accent);
+    background:
+      linear-gradient(90deg, var(--cp-accent-soft), transparent 58%),
+      var(--cp-bg-elevated);
+  }
+
+  .rpg-step-card {
+    position: relative;
+    overflow: hidden;
+    background:
+      linear-gradient(145deg, var(--cp-sheen), transparent 42%),
+      var(--cp-bg-elevated);
+    clip-path: polygon(
+      8px 0,
+      100% 0,
+      100% calc(100% - 8px),
+      calc(100% - 8px) 100%,
+      0 100%,
+      0 8px
+    );
+  }
+
+  .rpg-step-card::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 44%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--cp-accent), transparent);
+    content: "";
+  }
+
+  .rpg-auth-stage {
+    position: relative;
+  }
+
+  .rpg-auth-stage::before,
+  .rpg-auth-stage::after {
+    position: fixed;
+    width: 18rem;
+    height: 18rem;
+    border: 1px solid var(--cp-accent);
+    border-radius: 9999px;
+    content: "";
+    opacity: 0.12;
+    pointer-events: none;
+  }
+
+  .rpg-auth-stage::before {
+    top: -7rem;
+    left: -7rem;
+    box-shadow:
+      0 0 0 3rem var(--cp-highlight),
+      0 0 0 6rem color-mix(in srgb, var(--cp-accent) 5%, transparent);
+  }
+
+  .rpg-auth-stage::after {
+    right: -7rem;
+    bottom: -7rem;
+    box-shadow:
+      0 0 0 3rem var(--cp-highlight),
+      0 0 0 6rem color-mix(in srgb, var(--cp-accent) 5%, transparent);
+  }
+
+  .rpg-auth-card {
+    border-color: var(--cp-accent);
+    box-shadow:
+      0 28px 80px color-mix(in srgb, var(--cp-bg) 75%, transparent),
+      0 0 44px var(--cp-accent-soft);
+  }
+
+  .rpg-choice-card {
+    position: relative;
+    overflow: hidden;
+    clip-path: polygon(
+      9px 0,
+      100% 0,
+      100% calc(100% - 9px),
+      calc(100% - 9px) 100%,
+      0 100%,
+      0 9px
+    );
+  }
+
+  .rpg-choice-card[aria-pressed="true"],
+  .rpg-choice-card[data-selected="true"] {
+    box-shadow: 0 0 22px var(--cp-accent-soft);
+  }
+
+  .rpg-skill-tile {
+    position: relative;
+    overflow: hidden;
+    min-height: 9rem;
+  }
+
+  .rpg-skill-tile::after {
+    position: absolute;
+    right: -1.1rem;
+    bottom: -1.1rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    border: 1px solid var(--cp-border);
+    border-radius: 9999px;
+    content: "";
+    opacity: 0.5;
+  }
+
+  .rpg-achievement {
+    position: relative;
+    clip-path: polygon(50% 0, 92% 16%, 100% 72%, 50% 100%, 0 72%, 8% 16%);
+  }
+
+  .rpg-achievement[data-unlocked="true"] {
+    box-shadow: 0 0 26px var(--cp-accent-soft);
+  }
+
+  .rpg-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--cp-border-strong);
+  }
+
+  .rpg-divider::before,
+  .rpg-divider::after {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cp-border-strong));
+    content: "";
+    flex: 1;
+  }
+
+  .rpg-divider::after {
+    background: linear-gradient(90deg, var(--cp-border-strong), transparent);
+  }
+
+  .rpg-progress-track {
+    position: relative;
+    border: 1px solid var(--cp-border-strong);
+    background:
+      repeating-linear-gradient(
+        90deg,
+        var(--cp-surface-soft) 0,
+        var(--cp-surface-soft) 12px,
+        var(--cp-bg) 12px,
+        var(--cp-bg) 14px
+      );
+    box-shadow: 0 0 0 2px var(--cp-bg) inset;
+  }
+
+  .rpg-progress-fill {
+    background:
+      repeating-linear-gradient(
+        120deg,
+        var(--cp-accent),
+        var(--cp-accent) 10px,
+        var(--cp-accent-hover) 10px,
+        var(--cp-accent-hover) 20px
+      );
+    box-shadow: 0 0 14px var(--cp-accent);
+  }
+}
+
+@keyframes campaign-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

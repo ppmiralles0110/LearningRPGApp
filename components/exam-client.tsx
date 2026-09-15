@@ -85,7 +85,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
   if (!attempt && !error) {
     return (
-      <div className="card mx-auto mt-16 max-w-xl text-center" aria-busy="true">
+      <div className="card rpg-quest-card mx-auto mt-16 max-w-xl text-center" aria-busy="true">
         <LoaderCircle className="mx-auto animate-spin" size={34} aria-hidden="true" />
         <p className="muted mt-3">Preparing your exam chamber…</p>
       </div>
@@ -94,7 +94,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
   if (!attempt) {
     return (
-      <div className="card mx-auto mt-16 max-w-xl text-center">
+      <div className="card rpg-quest-card mx-auto mt-16 max-w-xl text-center">
         <AlertTriangle className="mx-auto" size={32} aria-hidden="true" />
         <h1 className="mt-4 text-2xl font-bold">Exam unavailable</h1>
         <p className="muted mt-2">{error}</p>
@@ -107,15 +107,15 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
   if (attempt.status === "submitted" && attempt.result) {
     return (
-      <div className="mx-auto max-w-4xl">
-        <div className="card text-center">
+      <div className="rpg-page mx-auto max-w-4xl">
+        <div className="card rpg-level-card text-center">
           {attempt.result.passed ? (
             <CheckCircle2 className="mx-auto" size={44} style={{ color: "var(--cp-success)" }} aria-hidden="true" />
           ) : (
             <RotateCcw className="mx-auto" size={44} style={{ color: "var(--cp-warning)" }} aria-hidden="true" />
           )}
           <p className="eyebrow mt-4">{attempt.certificationCode} practice result</p>
-          <h1 className="mt-2 text-5xl font-bold">{attempt.result.score}%</h1>
+          <h1 className="rpg-level-number mt-4">{attempt.result.score}%</h1>
           <p className="muted mt-3">
             {attempt.result.correct} of {attempt.result.total} correct ·{" "}
             {attempt.result.passed
@@ -127,13 +127,13 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
           </div>
         </div>
 
-        <section className="card mt-4">
+        <section className="card rpg-quest-card mt-4">
           <h2 className="text-xl font-bold">Knowledge gaps and remediation</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {attempt.result.topicScores.map((topic) => (
               <div
                 key={topic.domain}
-                className="rounded-control border p-4"
+                className="rpg-step-card border p-4"
                 style={{ background: "var(--cp-bg-elevated)" }}
               >
                 <h3 className="font-bold capitalize">{topic.domain.replaceAll("-", " ")}</h3>
@@ -158,7 +158,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
           </div>
         </section>
 
-        <section className="card mt-4">
+        <section className="card rpg-quest-card mt-4">
           <h2 className="text-xl font-bold">Answer review</h2>
           <div className="mt-4 space-y-3">
             {attempt.questions.map((question, index) => {
@@ -168,7 +168,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
               return (
                 <div
                   key={question.id}
-                  className="rounded-control border p-4"
+                  className="rpg-step-card border p-4"
                   style={{ background: "var(--cp-bg-elevated)" }}
                 >
                   <div className="flex items-start gap-3">
@@ -216,8 +216,8 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <header className="card sticky top-3 z-10 flex items-center justify-between gap-4">
+    <div className="rpg-page mx-auto max-w-4xl">
+      <header className="card rpg-quest-card sticky top-3 z-10 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <ShieldCheck style={{ color: "var(--cp-accent)" }} aria-hidden="true" />
           <div>
@@ -249,7 +249,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
       <div className="mt-4 space-y-4">
         {attempt.questions.map((question, index) => (
-          <section key={question.id} className="card">
+          <section key={question.id} className="card rpg-quest-card">
             <div className="flex items-center justify-between gap-3">
               <span className="eyebrow">
                 Question {index + 1} · {question.type.replace("_", " ")}

@@ -118,11 +118,11 @@ export function QuestsClient() {
   }
 
   return (
-    <div>
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="eyebrow">Quest log</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
+    <div className="rpg-page">
+      <header className="rpg-hero flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="relative z-[1]">
+          <p className="eyebrow">Adventurer&apos;s quest journal</p>
+          <h1 className="rpg-title mt-2 text-3xl sm:text-5xl">
             Deliberate practice, not content wandering
           </h1>
           <p className="muted mt-2 max-w-3xl">
@@ -130,7 +130,7 @@ export function QuestsClient() {
             check. Boss battles and raids produce larger, reviewable deliverables.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="relative z-[1] flex flex-wrap gap-2">
           {(
             [
               ["daily", "Daily quest"],
@@ -180,7 +180,7 @@ export function QuestsClient() {
           ))}
         </div>
       ) : quests.length === 0 ? (
-        <div className="card mt-3 border-dashed py-14 text-center">
+        <div className="card rpg-quest-card mt-3 border-dashed py-14 text-center">
           <BookOpen className="mx-auto" size={34} aria-hidden="true" />
           <h2 className="mt-4 text-xl font-bold">Your quest log is empty</h2>
           <p className="muted mt-2">
@@ -197,17 +197,11 @@ export function QuestsClient() {
       ) : (
         <div className="mt-3 space-y-5">
           {quests.map((quest) => (
-            <article key={quest.id} className="card">
+            <article key={quest.id} className="card rpg-quest-card">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="max-w-3xl">
                   <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-                    <span
-                      className="rounded-full px-2.5 py-1 capitalize"
-                      style={{
-                        background: "var(--cp-accent-soft)",
-                        color: "var(--cp-accent)",
-                      }}
-                    >
+                    <span className="rpg-status-chip">
                       {quest.cadence}
                     </span>
                     <span className="muted flex items-center gap-1">
@@ -248,7 +242,7 @@ export function QuestsClient() {
                   return (
                     <section
                       key={step.id}
-                      className="rounded-control border p-4"
+                      className="rpg-step-card border p-4"
                       style={{
                         background: step.completed
                           ? "var(--cp-accent-soft)"

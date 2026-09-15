@@ -14,9 +14,9 @@ import {
 import { fetchJson } from "@/lib/client-api";
 
 const navigation = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/quests", label: "Quest log", icon: BookOpenCheck },
-  { href: "/certifications", label: "Certifications", icon: GraduationCap },
+  { href: "/dashboard", label: "Command hall", icon: LayoutDashboard },
+  { href: "/quests", label: "Quest journal", icon: BookOpenCheck },
+  { href: "/certifications", label: "Trials", icon: GraduationCap },
   { href: "/mentor", label: "The Guide", icon: MessageCircle },
 ];
 
@@ -42,25 +42,22 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
+    <div className="rpg-shell min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
       <aside
-        className="border-b p-4 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:p-6"
-        style={{ background: "var(--cp-bg-elevated)" }}
+        className="rpg-sidebar border-b p-4 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:p-6"
       >
         <div className="flex items-center justify-between lg:block">
           <Link href="/dashboard" className="flex items-center gap-3">
             <span
-              className="grid h-10 w-10 place-items-center rounded-control"
-              style={{
-                background: "var(--cp-accent)",
-                color: "var(--cp-accent-fg)",
-              }}
+              className="rpg-brand-mark grid h-12 w-12 place-items-center"
             >
-              <ShieldCheck aria-hidden="true" size={21} />
+              <ShieldCheck aria-hidden="true" size={24} />
             </span>
             <span>
-              <span className="block text-lg font-bold leading-tight">LevelUp</span>
-              <span className="muted block text-xs">Architect</span>
+              <span className="rpg-brand-title block leading-tight">LevelUp</span>
+              <span className="muted block text-[0.68rem] font-bold uppercase tracking-[0.24em]">
+                Architect
+              </span>
             </span>
           </Link>
           <span
@@ -74,8 +71,9 @@ export function AppShell({
           </span>
         </div>
 
+        <p className="rpg-side-label mt-10">Adventurer&apos;s menu</p>
         <nav
-          className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:mt-10 lg:block lg:space-y-2"
+          className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-2"
           aria-label="Primary navigation"
         >
           {navigation.map((item) => {
@@ -85,7 +83,7 @@ export function AppShell({
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex min-w-max items-center gap-3 rounded-control px-3 py-2.5 text-sm font-semibold transition"
+                className="rpg-nav-item flex min-w-max items-center gap-3 px-3 py-3 text-xs font-bold uppercase tracking-[0.09em] transition"
                 style={
                   active
                     ? {
@@ -103,33 +101,32 @@ export function AppShell({
           })}
         </nav>
 
-        <div className="mt-6 hidden border-t pt-5 lg:block">
+        <div className="mt-8 hidden border-t pt-5 lg:block">
+          <p className="rpg-side-label mb-3">Character profile</p>
+          <div className="rpg-player-card">
           <div className="flex items-center gap-3">
             <span
-              className="grid h-9 w-9 place-items-center rounded-full font-bold"
-              style={{
-                background: "var(--cp-surface-soft)",
-                color: "var(--cp-accent)",
-              }}
+              className="rpg-player-avatar grid h-10 w-10 place-items-center font-black"
             >
               {displayName.slice(0, 1).toUpperCase()}
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{displayName}</p>
-              <p className="muted truncate text-xs capitalize">
+              <p className="muted truncate text-[0.65rem] font-bold uppercase tracking-wider">
                 {role.replace("_", " ")}
               </p>
             </div>
           </div>
           <button
             type="button"
-            className="mt-4 flex w-full items-center gap-2 rounded-control px-3 py-2 text-sm font-semibold"
+            className="mt-4 flex w-full items-center gap-2 border-t px-1 pt-3 text-xs font-bold uppercase tracking-wider"
             style={{ color: "var(--cp-text-muted)" }}
             onClick={logout}
           >
             <LogOut size={17} aria-hidden="true" />
             Sign out
           </button>
+          </div>
         </div>
       </aside>
 
@@ -137,8 +134,8 @@ export function AppShell({
         <div className="mx-auto max-w-[1480px] p-4 sm:p-6 lg:p-8">{children}</div>
         <footer className="mx-auto flex max-w-[1480px] items-center gap-2 px-4 pb-8 text-xs sm:px-6 lg:px-8">
           <Award size={14} aria-hidden="true" />
-          <span className="muted">
-            Local-first learning progress. External activity verification is not enabled.
+          <span className="muted font-semibold uppercase tracking-wider">
+            Campaign progress saved locally · External verification not enabled
           </span>
         </footer>
       </main>

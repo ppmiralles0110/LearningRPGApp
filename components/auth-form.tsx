@@ -51,9 +51,9 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   }
 
   return (
-    <div className="card w-full max-w-md p-6 sm:p-8">
+    <div className="card rpg-auth-card w-full max-w-md p-6 sm:p-8">
       <p className="eyebrow">{isRegister ? "Create your character" : "Continue your campaign"}</p>
-      <h1 className="mt-2 text-3xl font-bold tracking-tight">
+      <h1 className="rpg-title mt-3 text-3xl">
         {isRegister ? "Start the architect path" : "Welcome back, architect"}
       </h1>
       <p className="muted mt-3 text-sm leading-6">
@@ -124,10 +124,8 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
       {!isRegister ? (
         <>
-          <div className="my-5 flex items-center gap-3">
-            <span className="h-px flex-1 border-t" />
-            <span className="muted text-xs font-semibold uppercase">or</span>
-            <span className="h-px flex-1 border-t" />
+          <div className="rpg-divider my-5">
+            <span className="text-xs font-black uppercase tracking-widest">or</span>
           </div>
           <button
             className="button-secondary w-full"
