@@ -13,8 +13,7 @@ export function ProgressBar({ value, label, compact = false }: ProgressBarProps)
         <span className="muted">{normalized}%</span>
       </div>
       <div
-        className={`overflow-hidden rounded-full ${compact ? "h-1.5" : "h-2.5"}`}
-        style={{ background: "var(--cp-surface-soft)" }}
+        className={`rpg-progress-track overflow-hidden ${compact ? "h-2" : "h-3"}`}
         role="progressbar"
         aria-label={label}
         aria-valuemin={0}
@@ -22,9 +21,8 @@ export function ProgressBar({ value, label, compact = false }: ProgressBarProps)
         aria-valuenow={normalized}
       >
         <div
-          className="h-full rounded-full transition-all duration-500"
+          className="rpg-progress-fill h-full transition-all duration-500"
           style={{
-            background: "var(--cp-accent)",
             width: `${normalized}%`,
           }}
         />

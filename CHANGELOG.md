@@ -7,6 +7,7 @@ All notable changes are documented here. The project follows Keep a Changelog pr
 ### Added
 
 - Complete local-first LevelUp Architect MVP.
+- Fantasy-tech RPG campaign visual system with game HUD framing, quest-journal navigation, rank treatments, mission panels, and achievement presentation.
 - Secure local registration, demo login, opaque sessions, and role-ready authorization.
 - Focus onboarding and adaptive daily, weekly, and monthly quest generation.
 - Transactional quest completion, configurable XP, ledger idempotency, levels 1–100, tiers, achievements, and streaks.

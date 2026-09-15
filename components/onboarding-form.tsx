@@ -59,16 +59,18 @@ export function OnboardingForm({ domains }: { domains: DomainOption[] }) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="mb-8 max-w-2xl">
+    <div className="rpg-page mx-auto max-w-5xl">
+      <div className="rpg-hero mb-8">
+        <div className="relative z-[1] max-w-3xl">
         <p className="eyebrow">Character setup</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="rpg-title mt-2 text-3xl sm:text-5xl">
           Choose the skills you want to level
         </h1>
         <p className="muted mt-3 leading-7">
           Select up to five priorities in order. Your quest engine combines focus,
           prerequisites, performance, confidence, and available time.
         </p>
+        </div>
       </div>
 
       <section aria-labelledby="focus-heading">
@@ -101,7 +103,8 @@ export function OnboardingForm({ domains }: { domains: DomainOption[] }) {
             return (
               <div
                 key={domain.slug}
-                className="rounded-card border p-4 transition"
+                className="rpg-choice-card border p-4 transition"
+                data-selected={isSelected}
                 style={{
                   background: isSelected
                     ? "var(--cp-accent-soft)"

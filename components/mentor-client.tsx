@@ -103,26 +103,35 @@ export function MentorClient() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <header>
+    <div className="rpg-page mx-auto max-w-5xl">
+      <header className="rpg-hero">
+        <div className="relative z-[1]">
         <p className="eyebrow">Personal AI mentor</p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="rpg-title mt-2 text-3xl sm:text-5xl">
           The Guide
         </h1>
         <p className="muted mt-2 max-w-3xl">
           A local-first RPG mentor grounded in your active quests, weak skills, study
           time, and certification path. It never claims work was verified when it was not.
         </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <span className="rpg-status-chip">
+            <Sparkles size={12} aria-hidden="true" />
+            Oracle online
+          </span>
+          <span className="rpg-status-chip">
+            <ShieldCheck size={12} aria-hidden="true" />
+            Local knowledge mode
+          </span>
+        </div>
+        </div>
       </header>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_280px]">
-        <section className="card min-h-[540px]">
+        <section className="card rpg-quest-card min-h-[540px]">
           <div className="flex items-center justify-between gap-4 border-b pb-4">
             <div className="flex items-center gap-3">
-              <span
-                className="grid h-10 w-10 place-items-center rounded-control"
-                style={{ background: "var(--cp-accent)", color: "var(--cp-accent-fg)" }}
-              >
+              <span className="rpg-brand-mark grid h-11 w-11 place-items-center">
                 <Compass size={20} aria-hidden="true" />
               </span>
               <div>

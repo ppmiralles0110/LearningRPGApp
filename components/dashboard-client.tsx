@@ -104,18 +104,32 @@ export function DashboardClient() {
     .sort((a, b) => b.readiness - a.readiness)[0];
 
   return (
-    <div>
-      <header className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="eyebrow">Campaign dashboard</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
+    <div className="rpg-page">
+      <header className="rpg-hero mb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="relative z-[1]">
+          <p className="eyebrow">Campaign command hall</p>
+          <h1 className="rpg-title mt-2 text-3xl sm:text-5xl">
             Ready for the next quest, {data.user.displayName.split(" ")[0]}?
           </h1>
-          <p className="muted mt-2">
+          <p className="muted mt-3 max-w-3xl">
             Your path adapts as mastery, confidence, accuracy, and available time change.
           </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <span className="rpg-status-chip">
+              <Sparkles size={12} aria-hidden="true" />
+              Campaign online
+            </span>
+            <span className="rpg-status-chip">
+              <Clock3 size={12} aria-hidden="true" />
+              {data.user.studyMinutes} minute loadout
+            </span>
+            <span className="rpg-status-chip capitalize">
+              <Target size={12} aria-hidden="true" />
+              {data.user.role.replace("_", " ")}
+            </span>
+          </div>
         </div>
-        <Link className="button-secondary" href="/quests">
+        <Link className="button-secondary relative z-[1]" href="/quests">
           Open quest log <ArrowRight size={17} aria-hidden="true" />
         </Link>
       </header>
@@ -132,21 +146,22 @@ export function DashboardClient() {
 
       <section className="grid gap-4 lg:grid-cols-[1.45fr_1fr_1fr]">
         <div
-          className="rounded-card border p-6 shadow-card"
-          style={{ background: "var(--cp-panel-strong)" }}
+          className="rpg-level-card"
         >
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="eyebrow">{data.progression.tier}</p>
-              <h2 className="mt-1 text-3xl font-bold">
-                Level {data.progression.level}
-              </h2>
+              <p className="eyebrow">Rank · {data.progression.tier}</p>
+              <div className="mt-4 flex items-end gap-3">
+                <span className="muted pb-1 text-sm font-black uppercase tracking-[0.18em]">
+                  Level
+                </span>
+                <h2 className="rpg-level-number">{data.progression.level}</h2>
+              </div>
             </div>
             <span
-              className="grid h-12 w-12 place-items-center rounded-control"
-              style={{ background: "var(--cp-accent-soft)", color: "var(--cp-accent)" }}
+              className="rpg-icon-frame h-14 w-14"
             >
-              <Trophy size={24} aria-hidden="true" />
+              <Trophy size={27} aria-hidden="true" />
             </span>
           </div>
           <div className="mt-6">
@@ -168,16 +183,15 @@ export function DashboardClient() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card rpg-stat-card">
           <div className="flex items-center gap-3">
             <span
-              className="grid h-10 w-10 place-items-center rounded-control"
-              style={{ background: "var(--cp-accent-soft)", color: "var(--cp-accent)" }}
+              className="rpg-icon-frame h-11 w-11"
             >
               <Flame size={20} aria-hidden="true" />
             </span>
             <div>
-              <p className="muted text-xs font-semibold uppercase">Daily streak</p>
+              <p className="eyebrow">Daily streak</p>
               <p className="text-2xl font-bold">{dailyStreak?.count ?? 0} days</p>
             </div>
           </div>
@@ -187,16 +201,15 @@ export function DashboardClient() {
           </p>
         </div>
 
-        <div className="card">
+        <div className="card rpg-stat-card">
           <div className="flex items-center gap-3">
             <span
-              className="grid h-10 w-10 place-items-center rounded-control"
-              style={{ background: "var(--cp-accent-soft)", color: "var(--cp-accent)" }}
+              className="rpg-icon-frame h-11 w-11"
             >
               <Award size={20} aria-hidden="true" />
             </span>
             <div>
-              <p className="muted text-xs font-semibold uppercase">Achievements</p>
+              <p className="eyebrow">Achievements</p>
               <p className="text-2xl font-bold">
                 {unlocked.length} / {data.achievements.length}
               </p>
@@ -211,7 +224,7 @@ export function DashboardClient() {
       </section>
 
       <section className="mt-4 grid gap-4 xl:grid-cols-[1.35fr_1fr]">
-        <div className="card">
+        <div className="card rpg-quest-card">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="eyebrow">Active mission</p>
@@ -222,10 +235,7 @@ export function DashboardClient() {
           {activeQuest ? (
             <div className="mt-5">
               <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-                <span
-                  className="rounded-full px-2.5 py-1 capitalize"
-                  style={{ background: "var(--cp-accent-soft)", color: "var(--cp-accent)" }}
-                >
+                <span className="rpg-status-chip">
                   {activeQuest.cadence}
                 </span>
                 <span className="muted flex items-center gap-1">
@@ -267,7 +277,7 @@ export function DashboardClient() {
           )}
         </div>
 
-        <div className="card">
+        <div className="card rpg-stat-card">
           <div className="flex items-center gap-3">
             <MessageCircle style={{ color: "var(--cp-accent)" }} aria-hidden="true" />
             <div>
@@ -291,7 +301,7 @@ export function DashboardClient() {
       </section>
 
       <section className="mt-4 grid gap-4 xl:grid-cols-[1.25fr_1fr]">
-        <div className="card">
+        <div className="card rpg-quest-card">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="eyebrow">Adaptive path</p>
@@ -304,8 +314,7 @@ export function DashboardClient() {
               data.recommendations.map((recommendation, index) => (
                 <div
                   key={recommendation.id}
-                  className="rounded-control border p-4"
-                  style={{ background: "var(--cp-bg-elevated)" }}
+                  className="rpg-quest-row border p-4"
                 >
                   <div className="flex items-start gap-3">
                     <span
@@ -335,7 +344,7 @@ export function DashboardClient() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card rpg-cert-card">
           <div className="flex items-center gap-3">
             <GraduationCap style={{ color: "var(--cp-accent)" }} aria-hidden="true" />
             <div>
@@ -377,7 +386,7 @@ export function DashboardClient() {
           {data.skills.map((skill) => (
             <div
               key={skill.slug}
-              className="rounded-control border p-3"
+              className="rpg-skill-tile border p-3"
               style={{
                 background:
                   skill.mastery >= 50
@@ -447,7 +456,8 @@ export function DashboardClient() {
             {data.achievements.map((achievement) => (
               <div
                 key={achievement.code}
-                className="rounded-control border p-3 text-center"
+                className="rpg-achievement border p-5 text-center"
+                data-unlocked={Boolean(achievement.unlockedAt)}
                 style={{
                   background: achievement.unlockedAt
                     ? "var(--cp-accent-soft)"

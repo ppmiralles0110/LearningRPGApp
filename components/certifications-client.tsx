@@ -70,11 +70,11 @@ export function CertificationsClient() {
   }
 
   return (
-    <div>
-      <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="eyebrow">Certification campaign</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
+    <div className="rpg-page">
+      <header className="rpg-hero flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="relative z-[1]">
+          <p className="eyebrow">Certification trial grounds</p>
+          <h1 className="rpg-title mt-2 text-3xl sm:text-5xl">
             Turn readiness into evidence
           </h1>
           <p className="muted mt-2 max-w-3xl">
@@ -82,7 +82,7 @@ export function CertificationsClient() {
             performance. Readiness is guidance, not a guarantee of passing.
           </p>
         </div>
-        <label className="text-sm font-semibold">
+        <label className="relative z-[1] text-sm font-semibold">
           Practice difficulty
           <select
             className="input ml-2 w-auto"
@@ -104,7 +104,7 @@ export function CertificationsClient() {
         </p>
       ) : null}
 
-      <section className="card mt-6">
+      <section className="card rpg-quest-card mt-6">
         <div className="flex items-center gap-3">
           <Map style={{ color: "var(--cp-accent)" }} aria-hidden="true" />
           <div>
@@ -116,7 +116,7 @@ export function CertificationsClient() {
           {(certifications ?? []).map((certification, index) => (
             <div
               key={certification.code}
-              className="relative rounded-control border p-3"
+              className="rpg-quest-row relative border p-3"
               style={{ background: "var(--cp-bg-elevated)" }}
             >
               <span
@@ -145,7 +145,7 @@ export function CertificationsClient() {
       ) : (
         <div className="mt-4 grid gap-4 xl:grid-cols-2">
           {certifications.map((certification) => (
-            <article key={certification.code} className="card">
+            <article key={certification.code} className="card rpg-cert-card">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <span
@@ -167,7 +167,7 @@ export function CertificationsClient() {
                   </div>
                 </div>
                 <span
-                  className="rounded-full px-2.5 py-1 text-xs font-bold capitalize"
+                  className="rpg-status-chip capitalize"
                   style={{
                     background: "var(--cp-surface-soft)",
                     color:
