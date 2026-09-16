@@ -32,6 +32,17 @@ export interface QuestStep {
   resourceUrl?: string;
   resourceLabel?: string;
   xpKey: string;
+  guide?: {
+    introduction: string;
+    checkpoints: Array<{
+      id: string;
+      title: string;
+      instructions: string;
+      successCriteria: string;
+      hint?: string;
+      completed?: boolean;
+    }>;
+  };
   quiz?: {
     prompt: string;
     options: string[];

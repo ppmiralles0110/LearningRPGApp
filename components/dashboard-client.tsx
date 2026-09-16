@@ -100,6 +100,7 @@ export function DashboardClient() {
   const unlocked = data.achievements.filter((achievement) => achievement.unlockedAt);
   const dailyStreak = data.streaks.find((streak) => streak.kind === "daily");
   const nextCertification = data.certifications
+    .filter((certification) => certification.status !== "certified")
     .slice()
     .sort((a, b) => b.readiness - a.readiness)[0];
 
@@ -370,7 +371,18 @@ export function DashboardClient() {
                 View roadmap
               </Link>
             </div>
-          ) : null}
+          ) : (
+            <div className="mt-5">
+              <p className="font-bold">Roadmap conquered</p>
+              <p className="muted mt-2 text-sm">
+                Every current roadmap credential has certificate evidence. Keep
+                skills current through boss battles and renew expiring credentials.
+              </p>
+              <Link className="button-secondary mt-4" href="/certifications">
+                Review certificates
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 

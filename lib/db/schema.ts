@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 4;
 
 export const schemaSql = `
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -87,6 +87,14 @@ CREATE TABLE IF NOT EXISTS quest_step_completions (
   PRIMARY KEY (quest_id, step_id)
 );
 
+CREATE TABLE IF NOT EXISTS quest_guide_checkpoints (
+  quest_id TEXT NOT NULL REFERENCES quest_instances(id) ON DELETE CASCADE,
+  step_id TEXT NOT NULL,
+  checkpoint_id TEXT NOT NULL,
+  completed_at TEXT NOT NULL,
+  PRIMARY KEY (quest_id, step_id, checkpoint_id)
+);
+
 CREATE TABLE IF NOT EXISTS challenge_progress (
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   template_id TEXT NOT NULL REFERENCES quest_templates(id),
@@ -168,6 +176,25 @@ CREATE TABLE IF NOT EXISTS user_certification_progress (
   PRIMARY KEY (user_id, certification_code)
 );
 
+CREATE TABLE IF NOT EXISTS user_certificates (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  certification_code TEXT NOT NULL REFERENCES certifications(code),
+  earned_on TEXT NOT NULL,
+  expires_on TEXT,
+  credential_id TEXT,
+  verification_url TEXT,
+  original_file_name TEXT NOT NULL,
+  stored_file_name TEXT NOT NULL UNIQUE,
+  mime_type TEXT NOT NULL,
+  file_size INTEGER NOT NULL CHECK (file_size > 0),
+  sha256 TEXT NOT NULL,
+  uploaded_at TEXT NOT NULL,
+  UNIQUE (user_id, certification_code)
+);
+CREATE INDEX IF NOT EXISTS idx_user_certificates_user
+  ON user_certificates(user_id, earned_on DESC);
+
 CREATE TABLE IF NOT EXISTS exam_questions (
   id TEXT PRIMARY KEY,
   certification_code TEXT NOT NULL REFERENCES certifications(code),
@@ -178,7 +205,8 @@ CREATE TABLE IF NOT EXISTS exam_questions (
   prompt TEXT NOT NULL,
   options_json TEXT NOT NULL,
   answer_index INTEGER NOT NULL,
-  explanation TEXT NOT NULL
+  explanation TEXT NOT NULL,
+  active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1))
 );
 CREATE INDEX IF NOT EXISTS idx_exam_questions_cert ON exam_questions(certification_code, difficulty);
 
@@ -221,4 +249,35 @@ CREATE TABLE IF NOT EXISTS mentor_messages (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_mentor_messages_user ON mentor_messages(user_id, created_at DESC);
+`;
+
+export const migrationV2Sql = `
+CREATE TABLE IF NOT EXISTS quest_guide_checkpoints (
+  quest_id TEXT NOT NULL REFERENCES quest_instances(id) ON DELETE CASCADE,
+  step_id TEXT NOT NULL,
+  checkpoint_id TEXT NOT NULL,
+  completed_at TEXT NOT NULL,
+  PRIMARY KEY (quest_id, step_id, checkpoint_id)
+);
+`;
+
+export const migrationV3Sql = `
+CREATE TABLE IF NOT EXISTS user_certificates (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  certification_code TEXT NOT NULL REFERENCES certifications(code),
+  earned_on TEXT NOT NULL,
+  expires_on TEXT,
+  credential_id TEXT,
+  verification_url TEXT,
+  original_file_name TEXT NOT NULL,
+  stored_file_name TEXT NOT NULL UNIQUE,
+  mime_type TEXT NOT NULL,
+  file_size INTEGER NOT NULL CHECK (file_size > 0),
+  sha256 TEXT NOT NULL,
+  uploaded_at TEXT NOT NULL,
+  UNIQUE (user_id, certification_code)
+);
+CREATE INDEX IF NOT EXISTS idx_user_certificates_user
+  ON user_certificates(user_id, earned_on DESC);
 `;

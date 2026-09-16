@@ -15,10 +15,14 @@ export async function fetchJson<T>(
   input: RequestInfo | URL,
   init?: RequestInit,
 ): Promise<T> {
+  const bodyIsFormData =
+    typeof FormData !== "undefined" && init?.body instanceof FormData;
   const response = await fetch(input, {
     ...init,
     headers: {
-      ...(init?.body ? { "content-type": "application/json" } : {}),
+      ...(init?.body && !bodyIsFormData
+        ? { "content-type": "application/json" }
+        : {}),
       ...init?.headers,
     },
   });

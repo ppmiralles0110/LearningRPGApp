@@ -32,6 +32,32 @@ export const completeQuestStepSchema = z.object({
   notes: z.string().trim().max(2000).optional(),
 });
 
+export const guideCheckpointSchema = z.object({
+  completed: z.boolean(),
+});
+
+const isoDate = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use a date in YYYY-MM-DD format.");
+
+export const certificateEvidenceSchema = z
+  .object({
+    earnedOn: isoDate,
+    expiresOn: z.union([isoDate, z.literal("")]).optional(),
+    credentialId: z.string().trim().max(200).optional(),
+    verificationUrl: z.union([z.string().trim().url().max(2048), z.literal("")]).optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.expiresOn && value.expiresOn < value.earnedOn) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["expiresOn"],
+        message: "Expiry date cannot be earlier than the earned date.",
+      });
+    }
+  });
+
 export const challengeProgressSchema = z.object({
   percent: z.number().int().min(0).max(100),
   evidenceUrl: z.string().trim().url().max(2048).nullable().optional(),
@@ -41,7 +67,7 @@ export const challengeProgressSchema = z.object({
 export const startExamSchema = z.object({
   certificationCode: z.string().trim().min(2).max(40),
   difficulty: z.number().int().min(1).max(5).default(2),
-  durationMinutes: z.number().int().min(5).max(180).default(30),
+  durationMinutes: z.number().int().min(5).max(180).default(90),
 });
 
 export const submitExamSchema = z.object({

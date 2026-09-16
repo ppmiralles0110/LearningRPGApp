@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   BookOpen,
@@ -11,6 +11,7 @@ import {
   LoaderCircle,
   Map,
   ShieldCheck,
+  Upload,
 } from "lucide-react";
 import type { DashboardData } from "@/lib/services/dashboard";
 import type { ExamAttemptView } from "@/lib/services/exams";
@@ -25,6 +26,7 @@ export function CertificationsClient() {
   const [difficulty, setDifficulty] = useState(2);
   const [busyCode, setBusyCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -55,7 +57,7 @@ export function CertificationsClient() {
         body: JSON.stringify({
           certificationCode,
           difficulty,
-          durationMinutes: 30,
+          durationMinutes: 90,
         }),
       });
       router.push(`/exams/${response.attempt.id}`);
@@ -65,6 +67,40 @@ export function CertificationsClient() {
           ? caught.message
           : "The practice exam could not be started.",
       );
+      setBusyCode(null);
+    }
+  }
+
+  async function uploadCertificate(
+    event: FormEvent<HTMLFormElement>,
+    certificationCode: string,
+  ) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const key = `evidence:${certificationCode}`;
+    setBusyCode(key);
+    setError(null);
+    setMessage(null);
+    try {
+      await fetchJson(
+        `/api/certifications/${encodeURIComponent(certificationCode)}/evidence`,
+        {
+          method: "POST",
+          body: new FormData(form),
+        },
+      );
+      form.reset();
+      await load();
+      setMessage(
+        `${certificationCode} proof recorded. Certification progress and XP are updated.`,
+      );
+    } catch (caught) {
+      setError(
+        caught instanceof ClientApiError
+          ? caught.message
+          : "The certificate evidence could not be uploaded.",
+      );
+    } finally {
       setBusyCode(null);
     }
   }
@@ -101,6 +137,15 @@ export function CertificationsClient() {
       {error ? (
         <p className="mt-5 text-sm font-semibold" style={{ color: "var(--cp-danger)" }} role="alert">
           {error}
+        </p>
+      ) : null}
+      {message ? (
+        <p
+          className="mt-5 text-sm font-semibold"
+          style={{ color: "var(--cp-success)" }}
+          role="status"
+        >
+          {message}
         </p>
       ) : null}
 
@@ -189,7 +234,7 @@ export function CertificationsClient() {
               <div className="muted mt-4 flex flex-wrap gap-3 text-xs">
                 <span className="flex items-center gap-1">
                   <Clock3 size={13} aria-hidden="true" />
-                  30-minute practice
+                  60 questions · 90 minutes
                 </span>
                 <span className="flex items-center gap-1">
                   <CheckCircle2 size={13} aria-hidden="true" />
@@ -197,6 +242,40 @@ export function CertificationsClient() {
                   {certification.recentExamScore !== null ? "%" : ""}
                 </span>
               </div>
+              {certification.certificateEvidence ? (
+                <div
+                  className="mt-4 rounded-control border p-3 text-sm"
+                  style={{
+                    background: "var(--cp-accent-soft)",
+                    borderColor: "var(--cp-success)",
+                  }}
+                >
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2
+                      className="mt-0.5 shrink-0"
+                      size={17}
+                      style={{ color: "var(--cp-success)" }}
+                      aria-hidden="true"
+                    />
+                    <div>
+                      <p className="font-bold">Certificate proof recorded</p>
+                      <p className="muted mt-1 text-xs">
+                        Earned {certification.certificateEvidence.earnedOn}
+                        {certification.certificateEvidence.expiresOn
+                          ? ` · expires ${certification.certificateEvidence.expiresOn}`
+                          : ""}
+                      </p>
+                      <a
+                        className="mt-2 inline-flex items-center gap-1 font-semibold"
+                        style={{ color: "var(--cp-link)" }}
+                        href={certification.certificateEvidence.downloadUrl}
+                      >
+                        Download {certification.certificateEvidence.originalFileName}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
               <div className="mt-5 flex flex-wrap gap-2">
                 <button
                   className="button-primary"
@@ -220,6 +299,89 @@ export function CertificationsClient() {
                   Official page <ExternalLink size={15} aria-hidden="true" />
                 </a>
               </div>
+              <details
+                className="mt-4 rounded-control border p-3"
+                style={{ background: "var(--cp-bg-elevated)" }}
+              >
+                <summary className="cursor-pointer text-sm font-bold">
+                  {certification.certificateEvidence
+                    ? "Replace certificate proof"
+                    : "Upload certificate proof"}
+                </summary>
+                <form
+                  className="mt-4 grid gap-3 sm:grid-cols-2"
+                  onSubmit={(event) =>
+                    void uploadCertificate(event, certification.code)
+                  }
+                >
+                  <label className="text-xs font-semibold">
+                    Date earned
+                    <input
+                      className="input mt-1"
+                      name="earnedOn"
+                      type="date"
+                      required
+                    />
+                  </label>
+                  <label className="text-xs font-semibold">
+                    Expiry date (optional)
+                    <input
+                      className="input mt-1"
+                      name="expiresOn"
+                      type="date"
+                    />
+                  </label>
+                  <label className="text-xs font-semibold">
+                    Credential ID (optional)
+                    <input
+                      className="input mt-1"
+                      name="credentialId"
+                      maxLength={200}
+                    />
+                  </label>
+                  <label className="text-xs font-semibold">
+                    Verification URL (optional)
+                    <input
+                      className="input mt-1"
+                      name="verificationUrl"
+                      type="url"
+                      placeholder="https://..."
+                    />
+                  </label>
+                  <label className="text-xs font-semibold sm:col-span-2">
+                    Certificate file
+                    <input
+                      className="input mt-1"
+                      name="certificate"
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                      required
+                    />
+                  </label>
+                  <p className="muted text-xs leading-5 sm:col-span-2">
+                    PDF or image, up to 8 MB. Evidence is stored in your local
+                    application data and is visible only to your signed-in account.
+                    Uploading records learner-attested proof; it does not perform
+                    external credential verification.
+                  </p>
+                  <button
+                    className="button-secondary sm:col-span-2 sm:justify-self-start"
+                    type="submit"
+                    disabled={Boolean(busyCode)}
+                  >
+                    {busyCode === `evidence:${certification.code}` ? (
+                      <LoaderCircle
+                        className="animate-spin"
+                        size={17}
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <Upload size={17} aria-hidden="true" />
+                    )}
+                    Save certificate proof
+                  </button>
+                </form>
+              </details>
             </article>
           ))}
         </div>
@@ -228,9 +390,10 @@ export function CertificationsClient() {
       <div className="mt-4 rounded-control border p-4 text-sm" style={{ background: "var(--cp-bg-elevated)" }}>
         <p className="font-bold">Practice engine scope</p>
         <p className="muted mt-1">
-          This MVP includes deterministic multiple-choice, scenario, and case-study
-          questions with timed attempts, scoring, weak-topic analysis, and remediation.
-          It is not an official exam simulator or a substitute for vendor materials.
+          Each assessment selects and shuffles 60 original multiple-choice, scenario,
+          and case-study questions, prioritizing questions not seen in your previous
+          attempt. It is not an official exam simulator or a substitute for vendor
+          materials.
         </p>
       </div>
     </div>

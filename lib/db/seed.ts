@@ -101,8 +101,8 @@ export function seedDatabase(db: AppDatabase): void {
     const questionStatement = db.prepare(`
       INSERT INTO exam_questions(
         id, certification_code, question_type, difficulty, domain_slug,
-        case_context, prompt, options_json, answer_index, explanation
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        case_context, prompt, options_json, answer_index, explanation, active
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
       ON CONFLICT(id) DO UPDATE SET
         certification_code=excluded.certification_code,
         question_type=excluded.question_type,
@@ -112,8 +112,10 @@ export function seedDatabase(db: AppDatabase): void {
         prompt=excluded.prompt,
         options_json=excluded.options_json,
         answer_index=excluded.answer_index,
-        explanation=excluded.explanation
+        explanation=excluded.explanation,
+        active=1
     `);
+    db.prepare("UPDATE exam_questions SET active=0").run();
     for (const question of examQuestions) {
       questionStatement.run(
         question.id,

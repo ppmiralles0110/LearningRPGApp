@@ -11,6 +11,7 @@
 # local data
 /data/*.db
 /data/*.db-*
+/data/certificates/
 
 # tests
 /coverage

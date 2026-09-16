@@ -13,6 +13,10 @@ All notable changes are documented here. The project follows Keep a Changelog pr
 - Transactional quest completion, configurable XP, ledger idempotency, levels 1–100, tiers, achievements, and streaks.
 - Skill mastery, confidence, accuracy, certification roadmap, readiness scoring, and timed practice exams.
 - Multiple-choice, scenario, and case-study scoring with weak-topic remediation.
+- One hundred original questions per certification, 60-question balanced assessments, previous-attempt rotation, shuffled ordering, and a scalable question navigator.
+- Persisted four-checkpoint guided labs for daily hands-on quests, boss battles, and raids.
+- Owner-only certificate evidence uploads with local PDF/image storage, certified progress, idempotent certification XP, and downloadable proof.
+- Session-scoped practice-answer recovery, explicit timeout closure, non-disruptive timer announcements, and retirement-safe exam catalog seeding.
 - Deterministic local mentor plus explicit OpenAI-compatible provider boundary.
 - Responsive, accessible dashboard, quest log, certification, exam, and mentor experiences.
 - SQLite schema/migrations/seed content, automated tests, Docker, devcontainer, CI, CodeQL, Dependabot, and project documentation.

@@ -41,6 +41,7 @@ function getMentorContext(db: AppDatabase, userId: string): MentorContext {
       FROM certifications c
       LEFT JOIN user_certification_progress ucp
         ON ucp.certification_code=c.code AND ucp.user_id=?
+      WHERE COALESCE(ucp.status, '') <> 'certified'
       ORDER BY COALESCE(ucp.readiness, 0) DESC, c.recommended_order
       LIMIT 1
     `)
@@ -61,7 +62,9 @@ function localReply(message: string, context: MentorContext): string {
     ? `Continue "${context.activeQuest}" and complete one step before switching topics.`
     : `Generate a daily quest in ${context.weakestDomain} and reserve ${context.studyMinutes} minutes.`;
   if (normalized.includes("cert")) {
-    return `Guide's counsel: ${context.certification ?? "your first fundamentals certification"} is the strongest next checkpoint. Take a practice exam, use weak-topic remediation, and schedule the real exam only after readiness is consistently above 80.`;
+    return context.certification
+      ? `Guide's counsel: ${context.certification} is the strongest next checkpoint. Take a practice exam, use weak-topic remediation, and schedule the real exam only after readiness is consistently above 80.`
+      : "Guide's counsel: every credential on the current roadmap is recorded. Maintain your skills through boss battles, renew expiring credentials, and choose a new specialization.";
   }
   if (
     normalized.includes("stuck") ||

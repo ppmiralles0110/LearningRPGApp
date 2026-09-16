@@ -19,17 +19,19 @@ Before production:
 - Terminate TLS at the platform and preserve secure-cookie behavior.
 - Store secrets in the hosting platform or Azure Key Vault; never expose them as `NEXT_PUBLIC_*`.
 - Restrict filesystem and database access to the application identity.
-- Back up the database and test restore procedures.
+- Back up the database and private certificate upload directory together, and test restore procedures.
 - Use PostgreSQL before running multiple application replicas.
 - Add centralized rate limiting and session revocation for Internet-facing deployments.
 - Review official resource URLs and content on a defined cadence.
 - Treat challenge evidence URLs and mentor messages as potentially sensitive learning data.
+- For Internet-facing use, move certificate evidence to private object storage and add malware scanning, retention, and deletion controls.
 
 ## Known MVP boundaries
 
 - Login throttling is process-local and intended for a local/single-instance MVP.
 - SQLite serializes writes and is not a horizontal-scaling database.
 - Challenge evidence is learner attestation; no GitHub activity is verified.
+- Certificate files are type/size checked and owner-authorized, but the credential itself is learner-attested and not verified with the issuer.
 - Local mentor output is deterministic guidance, not professional certification or security advice.
 - An external mentor provider receives the submitted message and derived learning context only when explicitly configured by the operator.
 
