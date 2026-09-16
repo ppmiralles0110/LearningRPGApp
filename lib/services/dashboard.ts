@@ -19,6 +19,14 @@ interface CertificationRow {
   official_url: string;
   confidence: number | null;
   status: string | null;
+  evidence_id: string | null;
+  earned_on: string | null;
+  expires_on: string | null;
+  credential_id: string | null;
+  verification_url: string | null;
+  original_file_name: string | null;
+  file_size: number | null;
+  uploaded_at: string | null;
 }
 
 export function getDashboard(db: AppDatabase, userId: string) {
@@ -111,13 +119,17 @@ export function getDashboard(db: AppDatabase, userId: string) {
 
   const certifications = db
     .prepare(`
-      SELECT c.*, ucp.confidence, ucp.status
+      SELECT c.*, ucp.confidence, ucp.status,
+        uc.id AS evidence_id, uc.earned_on, uc.expires_on, uc.credential_id,
+        uc.verification_url, uc.original_file_name, uc.file_size, uc.uploaded_at
       FROM certifications c
       LEFT JOIN user_certification_progress ucp
         ON ucp.certification_code=c.code AND ucp.user_id=?
+      LEFT JOIN user_certificates uc
+        ON uc.certification_code=c.code AND uc.user_id=?
       ORDER BY c.recommended_order
     `)
-    .all(userId) as CertificationRow[];
+    .all(userId, userId) as CertificationRow[];
   const certificationViews = certifications.map((certification) => {
     const domains = JSON.parse(certification.domains_json) as DomainSlug[];
     const matchingSkills = skills.filter((skill) => domains.includes(skill.slug));
@@ -152,12 +164,25 @@ export function getDashboard(db: AppDatabase, userId: string) {
       recommendedOrder: certification.recommended_order,
       domains,
       officialUrl: certification.official_url,
-      readiness,
+      readiness: certification.status === "certified" ? 100 : readiness,
       confidence,
       status:
         certification.status ??
         (readiness >= 80 ? "ready" : readiness >= 35 ? "preparing" : "planned"),
       recentExamScore: examScores[0]?.score ?? null,
+      certificateEvidence: certification.evidence_id
+        ? {
+            id: certification.evidence_id,
+            earnedOn: certification.earned_on,
+            expiresOn: certification.expires_on,
+            credentialId: certification.credential_id,
+            verificationUrl: certification.verification_url,
+            originalFileName: certification.original_file_name,
+            fileSize: certification.file_size,
+            uploadedAt: certification.uploaded_at,
+            downloadUrl: `/api/certifications/evidence/${certification.evidence_id}/download`,
+          }
+        : null,
     };
   });
 

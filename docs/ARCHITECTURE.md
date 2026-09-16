@@ -116,6 +116,7 @@ erDiagram
   USERS ||--o{ QUEST_INSTANCES : receives
   QUEST_TEMPLATES ||--o{ QUEST_INSTANCES : instantiates
   QUEST_INSTANCES ||--o{ QUEST_STEP_COMPLETIONS : records
+  QUEST_INSTANCES ||--o{ QUEST_GUIDE_CHECKPOINTS : tracks
   USERS ||--o{ XP_LEDGER : earns
   USERS ||--o{ STREAKS : maintains
   USERS ||--o{ SKILL_PROGRESS : develops
@@ -123,6 +124,8 @@ erDiagram
   USERS ||--o{ USER_ACHIEVEMENTS : unlocks
   ACHIEVEMENTS ||--o{ USER_ACHIEVEMENTS : defines
   CERTIFICATIONS ||--o{ EXAM_QUESTIONS : contains
+  USERS ||--o{ USER_CERTIFICATES : owns
+  CERTIFICATIONS ||--o{ USER_CERTIFICATES : proves
   USERS ||--o{ EXAM_ATTEMPTS : takes
   CERTIFICATIONS ||--o{ EXAM_ATTEMPTS : targets
   EXAM_ATTEMPTS ||--o{ EXAM_ATTEMPT_QUESTIONS : snapshots
@@ -143,6 +146,7 @@ erDiagram
 | `quest_templates` | Authored cadence, domain, duration, difficulty, mode, prerequisites, steps |
 | `quest_instances` | Learner assignment with unique learner/cadence/period |
 | `quest_step_completions` | Idempotent quest/step completion, score, response/evidence payload |
+| `quest_guide_checkpoints` | Ordered persisted progress inside guided hands-on steps |
 | `challenge_progress` | Learner/template percent, status, evidence URL, notes |
 | `xp_ledger` | Immutable reward event with unique learner/event key |
 | `streaks` | Current/best count and last period for daily/weekly/monthly |
@@ -151,7 +155,8 @@ erDiagram
 | `skill_progress` | Mastery, confidence, attempts, correct answers, completed steps |
 | `certifications` | Requested Microsoft/GitHub roadmap and official URLs |
 | `user_certification_progress` | Cached readiness/confidence/status and optional target date |
-| `exam_questions` | Original practice prompts, type, difficulty, domain, options, answer, explanation |
+| `user_certificates` | Owner-scoped earned/expiry metadata and private local file reference; one active proof per roadmap credential |
+| `exam_questions` | Original practice prompts, type, difficulty, domain, options, answer, explanation, and active/retired state |
 | `exam_attempts` | Server-timed lifecycle and immutable result snapshot |
 | `exam_attempt_questions` | Exact ordered question set per attempt |
 | `exam_answers` | Selected answer and correctness by attempt/question |
@@ -169,14 +174,20 @@ All JSON is authored or validated before persistence and parsed to explicit Type
 
 ### Migration strategy
 
-`SCHEMA_VERSION` and SQLite `user_version` protect against opening a database newer than the application. The initial schema runs in a transaction and records version 1. Future changes should add ordered migration functions:
+`SCHEMA_VERSION` and SQLite `user_version` protect against opening a database
+newer than the application. The initial schema runs in a transaction and ordered
+migrations then add guided checkpoint persistence (version 2), certificate
+evidence (version 3), and retirement state for authored exam questions (version
+4):
 
 ```text
 if version < 2: run migration 2; record; set user_version
 if version < 3: run migration 3; record; set user_version
+if version < 4: run migration 4; record; set user_version
 ```
 
-Never edit an already released migration. CI should gain upgrade fixtures before version 2.
+Never edit an already released migration. Upgrade fixtures validate migrations
+against representative prior-version databases.
 
 ## API design
 
@@ -207,8 +218,11 @@ All responses are JSON. Errors use:
 | `POST` | `/api/quests` | User | Generate cadence quest for current period |
 | `GET` | `/api/quests/:id` | Owner | Quest and persisted steps |
 | `POST` | `/api/quests/:id/steps/:stepId` | Owner | Transactional/idempotent completion |
+| `PATCH` | `/api/quests/:id/steps/:stepId/checkpoints/:checkpointId` | Owner | Persist or reopen ordered guided progress |
 | `PATCH` | `/api/challenges/:templateId` | User | Persist percent/evidence/reflection |
 | `GET` | `/api/certifications` | User | Roadmap and calculated readiness |
+| `POST` | `/api/certifications/:code/evidence` | User | Upload/replace owner-only PDF or image proof and record certification |
+| `GET` | `/api/certifications/evidence/:id/download` | Owner | Download private proof as a non-sniffable attachment |
 | `POST` | `/api/exams` | User | Create timed attempt and question snapshot |
 | `GET` | `/api/exams/:attemptId` | Owner | Active or submitted attempt |
 | `POST` | `/api/exams/:attemptId/submit` | Owner | Deadline check, scoring, remediation, readiness |
@@ -217,7 +231,10 @@ All responses are JSON. Errors use:
 
 ### Ownership
 
-Quest and exam lookups include both resource ID and current user ID. A valid resource ID belonging to another learner returns not found. This avoids cross-learner disclosure and prevents insecure direct object references.
+Quest, exam, and certificate-evidence lookups include both resource ID and
+current user ID. A valid resource ID belonging to another learner returns not
+found. This avoids cross-learner disclosure and prevents insecure direct object
+references.
 
 ## Critical sequences
 
@@ -266,6 +283,18 @@ sequenceDiagram
 
 The server compares its current time to stored `started_at + duration_minutes`; client countdown is presentation only. Exact attempt questions are loaded, submitted IDs/options are validated, and answers/result/skills/readiness/achievement commit in one transaction.
 
+### Certificate evidence
+
+The multipart route checks the session and request origin, validates credential
+metadata, rejects files over 8 MB, and identifies PDF/PNG/JPEG/WebP content from
+magic bytes rather than trusting the extension. A random server-side name is
+written under the configured private upload directory. The database transaction
+upserts one active proof per learner/credential, marks roadmap progress certified,
+awards the unique certification XP event, and unlocks Certification Warrior.
+Downloads require ownership and force attachment handling with `nosniff`.
+Replacing proof cleans up the superseded file; production backups must keep the
+database and certificate directory together.
+
 ## Error and state design
 
 - `400`: validation, incomplete exam, invalid answer.
@@ -273,7 +302,8 @@ The server compares its current time to stored `started_at + duration_minutes`; 
 - `403`: origin/role denial.
 - `404`: missing or non-owned resource.
 - `409`: duplicate state conflict, expired attempt, no eligible content.
-- `415`: non-JSON state change.
+- `413`: certificate upload request exceeds the hard byte limit.
+- `415`: unsupported request or certificate media type.
 - `429`: login throttling.
 - `5xx`: provider/runtime/configuration failures.
 
@@ -296,7 +326,7 @@ Guilds, team/certification leaderboards, shared challenges, and marketplace work
 
 ### Phase 1: local/single instance
 
-- SQLite WAL on a persistent local/container volume.
+- SQLite WAL and private certificate files on one persistent local/container volume.
 - One Node.js instance.
 - Process-local login throttle.
 - Synchronous database calls.

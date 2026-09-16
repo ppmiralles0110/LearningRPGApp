@@ -17,7 +17,7 @@ XP defaults are persisted in `xp_config` and can be changed without modifying do
 | Certification evidence | 1000 |
 | Streak milestone | Variable |
 
-An incorrect quiz answer records the attempt and completion but awards zero quiz XP. Certification XP is reserved for future verified certification evidence; practice exams do not award 1000 XP.
+An incorrect quiz answer records the attempt and completion but awards zero quiz XP. Recording learner-attested certificate evidence awards certification XP once per supported credential; replacing its file cannot award XP again. Practice exams do not award 1000 XP.
 
 ### Idempotency and transaction model
 
@@ -26,7 +26,7 @@ Each reward has a unique learner-scoped event key:
 ```text
 quest:{questId}:step:{stepId}
 streak:daily:{periodKey}
-certification:{certificationCode}:{verifiedEvidenceId}   (future)
+certification:{certificationCode}
 ```
 
 `UNIQUE(user_id, event_key)` is the final defense against duplicate XP. A quest-step transaction:
@@ -40,6 +40,11 @@ certification:{certificationCode}:{verifiedEvidenceId}   (future)
 7. Completes the quest only when every template step is persisted.
 8. Advances streaks and evaluates achievements.
 9. Commits all changes or none.
+
+Hands-on steps add four ordered, persisted checkpoints: prepare, execute,
+validate, and document. A learner cannot complete a later checkpoint before its
+predecessors or claim step XP before all checkpoints are complete. Reopening a
+checkpoint also reopens every dependent checkpoint.
 
 ### Level curve
 
@@ -92,7 +97,7 @@ The MVP evaluates:
 - **Copilot Champion:** completed GitHub Copilot quest.
 - **Foundry Builder:** Azure AI Foundry hands-on completion.
 - **AI Security Defender:** AI Security boss battle.
-- **Certification Warrior:** practice score at or above 70%.
+- **Certification Warrior:** practice score at or above 70% or recorded certificate evidence.
 
 Achievements use a learner/code primary key, so repeated evaluation is safe.
 
@@ -200,9 +205,12 @@ Status:
 - `planned`: below 35
 - `preparing`: 35–79
 - `ready`: 80 or above
-- `certified`: future verified learner evidence; readiness updates do not overwrite it
+- `certified`: learner-attested certificate evidence has been recorded; readiness updates do not overwrite it
 
-The score is guidance and should be calibrated with future anonymized outcome data before organizational use.
+The score is guidance and should be calibrated with future anonymized outcome
+data before organizational use. Uploaded PDF/image evidence is private to its
+owner and marks the roadmap credential as certified with 100% progress. This is
+an evidence record, not live verification with Microsoft or GitHub.
 
 ## Practice exam engine
 
@@ -215,15 +223,26 @@ Protected vendor exam questions must never be copied into this catalog. Seed que
 ### Attempt lifecycle
 
 1. Validate certification, difficulty, and duration.
-2. Select eligible questions at or below the requested difficulty.
-3. Persist the exact ordered question set and server start time.
-4. Return prompts/options without answers.
-5. On submission, authorize ownership and check server deadline.
-6. Require exactly one valid answer for every persisted question.
-7. Score overall and by domain.
-8. Persist answers, explanations, result, skill changes, readiness, and achievement in one transaction.
+2. Apply a 60-question difficulty blueprint to the certification's 100-question bank.
+3. Prefer questions absent from the learner's immediately previous attempt, then fill unavoidable overlap.
+4. Shuffle the selected set using the unique attempt ID and persist its exact order with the server start time.
+5. Return prompts/options without answers.
+6. On submission, authorize ownership and check server deadline.
+7. Require exactly one valid answer for every persisted question.
+8. Score overall and by domain.
+9. Persist answers, explanations, result, skill changes, readiness, and achievement in one transaction.
 
-The MVP uses deterministic selection because each certification has a small seed bank. Future larger banks should use a persisted blueprint and seeded shuffle, not client-side random selection.
+Every certification has 100 original, publicly objective-aligned practice
+questions distributed evenly across difficulties 1–5 and the three supported
+question types. The bank combines individual decisions with two-concept
+architecture scenarios and rationale questions; all 100 rendered prompts are
+distinct. Five blueprints shift emphasis toward the selected difficulty while
+retaining foundational and stretch questions. An assessment includes at most two
+questions for the same objective or objective pair. Selection and shuffling occur
+server-side; the unique attempt ID produces fresh order while an injectable seed
+keeps unit tests deterministic. The exact attempt snapshot is immutable. Catalog
+questions removed by a future release are marked inactive so historical attempt
+snapshots remain reviewable without retired content entering new assessments.
 
 ### Scoring and remediation
 

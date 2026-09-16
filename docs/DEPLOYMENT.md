@@ -67,6 +67,7 @@ Run `npm run dev` after container creation. Do not reuse the included developmen
 3. Set:
    - `AUTH_SECRET` as an application secret or Key Vault reference.
    - `DATABASE_PATH=/home/data/levelup-architect.db`.
+   - `CERTIFICATE_UPLOAD_DIR=/home/data/certificates`.
    - `NEXT_PUBLIC_APP_URL=https://<your-app-host>`.
    - `SESSION_COOKIE_SECURE=true`.
    - `MENTOR_PROVIDER=local` unless an approved provider is configured.
@@ -89,11 +90,14 @@ Do not point multiple App Service instances at separate SQLite files and expect 
 2. Create a Container App with ingress on target port 3000.
 3. Store `AUTH_SECRET` and optional mentor credentials as Container Apps secrets.
 4. Set `NEXT_PUBLIC_APP_URL` to the public HTTPS origin and `SESSION_COOKIE_SECURE=true`.
-5. For an SQLite pilot, attach a supported persistent volume at `/app/data` and set min/max replicas to 1.
+5. For an SQLite pilot, attach a supported persistent volume at `/app/data` for
+   both SQLite and certificate evidence, then set min/max replicas to 1.
 6. Configure `/api/health` probes and log collection.
 7. For production/multiple replicas, use Azure Database for PostgreSQL and remove the shared-file assumption.
 
-Container Apps ephemeral filesystem is not suitable for the SQLite database. A revision without persistent storage loses learner progress.
+Container Apps ephemeral filesystem is not suitable for the SQLite database or
+certificate evidence. A revision without persistent storage loses learner
+progress and uploaded proof. Back up and restore both together.
 
 ## PostgreSQL migration requirements
 

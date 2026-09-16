@@ -117,6 +117,45 @@ export function QuestsClient() {
     }
   }
 
+  async function toggleCheckpoint(
+    quest: QuestView,
+    stepId: string,
+    checkpointId: string,
+    completed: boolean,
+  ) {
+    const key = `${quest.id}:${stepId}:checkpoint:${checkpointId}`;
+    setBusyKey(key);
+    setError(null);
+    setMessage(null);
+    try {
+      const response = await fetchJson<{ quest: QuestView }>(
+        `/api/quests/${quest.id}/steps/${stepId}/checkpoints/${checkpointId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ completed }),
+        },
+      );
+      setQuests((current) =>
+        current?.map((candidate) =>
+          candidate.id === quest.id ? response.quest : candidate,
+        ) ?? null,
+      );
+      setMessage(
+        completed
+          ? "Guided checkpoint recorded."
+          : "Checkpoint and dependent progress reopened.",
+      );
+    } catch (caught) {
+      setError(
+        caught instanceof ClientApiError
+          ? caught.message
+          : "The guided checkpoint could not be updated.",
+      );
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
   return (
     <div className="rpg-page">
       <header className="rpg-hero flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -230,7 +269,7 @@ export function QuestsClient() {
                 </div>
               </div>
 
-              <div className="mt-6 grid gap-3 lg:grid-cols-3">
+              <div className="mt-6 grid gap-3">
                 {quest.steps.map((step, index) => {
                   const key = `${quest.id}:${step.id}`;
                   const Icon = stepIcons[step.type];
@@ -272,6 +311,91 @@ export function QuestsClient() {
                       </div>
                       <h3 className="mt-3 font-bold">{step.title}</h3>
                       <p className="muted mt-2 text-sm leading-5">{step.instructions}</p>
+
+                      {step.guide ? (
+                        <div
+                          className="mt-4 rounded-control border p-4"
+                          style={{ background: "var(--cp-surface)" }}
+                        >
+                          <p className="eyebrow">Guided field manual</p>
+                          <p className="muted mt-2 text-sm leading-5">
+                            {step.guide.introduction}
+                          </p>
+                          <ol className="mt-4 space-y-3">
+                            {step.guide.checkpoints.map((checkpoint, checkpointIndex) => {
+                              const checkpointKey = `${quest.id}:${step.id}:checkpoint:${checkpoint.id}`;
+                              const earlierIncomplete = step.guide?.checkpoints
+                                .slice(0, checkpointIndex)
+                                .some((candidate) => !candidate.completed);
+                              return (
+                                <li
+                                  key={checkpoint.id}
+                                  className="rounded-control border p-3"
+                                  style={{
+                                    background: checkpoint.completed
+                                      ? "var(--cp-accent-soft)"
+                                      : "var(--cp-bg-elevated)",
+                                    borderColor: checkpoint.completed
+                                      ? "var(--cp-success)"
+                                      : "var(--cp-border)",
+                                  }}
+                                >
+                                  <label className="flex cursor-pointer items-start gap-3">
+                                    <input
+                                      className="mt-1"
+                                      type="checkbox"
+                                      checked={checkpoint.completed ?? false}
+                                      disabled={
+                                        Boolean(busyKey) ||
+                                        step.completed ||
+                                        (Boolean(earlierIncomplete) &&
+                                          !checkpoint.completed)
+                                      }
+                                      onChange={(event) =>
+                                        void toggleCheckpoint(
+                                          quest,
+                                          step.id,
+                                          checkpoint.id,
+                                          event.target.checked,
+                                        )
+                                      }
+                                    />
+                                    <span>
+                                      <span className="font-bold">
+                                        {checkpointIndex + 1}. {checkpoint.title}
+                                      </span>
+                                      <span className="muted mt-1 block text-sm leading-5">
+                                        {checkpoint.instructions}
+                                      </span>
+                                    </span>
+                                  </label>
+                                  <div className="ml-7 mt-3 border-l-2 pl-3 text-xs leading-5">
+                                    <p>
+                                      <strong>Success:</strong>{" "}
+                                      {checkpoint.successCriteria}
+                                    </p>
+                                    {checkpoint.hint ? (
+                                      <p className="muted mt-1">
+                                        <strong>Guide hint:</strong> {checkpoint.hint}
+                                      </p>
+                                    ) : null}
+                                  </div>
+                                  {busyKey === checkpointKey ? (
+                                    <p className="muted ml-7 mt-2 flex items-center gap-2 text-xs">
+                                      <LoaderCircle
+                                        className="animate-spin"
+                                        size={14}
+                                        aria-hidden="true"
+                                      />
+                                      Saving checkpoint…
+                                    </p>
+                                  ) : null}
+                                </li>
+                              );
+                            })}
+                          </ol>
+                        </div>
+                      ) : null}
 
                       {step.resourceUrl ? (
                         <a
@@ -373,7 +497,21 @@ export function QuestsClient() {
                           className="button-primary mt-4 w-full"
                           type="button"
                           onClick={() => completeStep(quest, step.id)}
-                          disabled={Boolean(busyKey) || (step.type === "quiz" && answers[key] === undefined)}
+                          disabled={
+                            Boolean(busyKey) ||
+                            (step.type === "quiz" &&
+                              answers[key] === undefined) ||
+                            Boolean(
+                              step.guide?.checkpoints.some(
+                                (checkpoint) => !checkpoint.completed,
+                              ),
+                            )
+                          }
+                          aria-disabled={
+                            step.guide?.checkpoints.some(
+                              (checkpoint) => !checkpoint.completed,
+                            ) || undefined
+                          }
                         >
                           {busyKey === key ? (
                             <LoaderCircle className="animate-spin" size={17} aria-hidden="true" />

@@ -1,5 +1,6 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { AppDatabase } from "@/lib/db";
+import { ASSESSMENT_QUESTION_COUNT } from "@/lib/domain/question-bank";
 import { scoreExam, readinessScore, type ExamResult } from "@/lib/domain/exams";
 import type {
   DomainSlug,
@@ -33,6 +34,22 @@ interface AttemptRow {
   score: number | null;
   result_json: string | null;
 }
+
+interface QuestionCandidate {
+  id: string;
+  difficulty: number;
+}
+
+export const EXAM_DIFFICULTY_BLUEPRINTS: Record<
+  number,
+  readonly [number, number, number, number, number]
+> = {
+  1: [20, 18, 12, 6, 4],
+  2: [16, 20, 14, 6, 4],
+  3: [10, 16, 20, 10, 4],
+  4: [6, 10, 16, 20, 8],
+  5: [4, 6, 12, 18, 20],
+};
 
 export interface ExamQuestionView {
   id: string;
@@ -81,6 +98,109 @@ function questionDefinition(row: QuestionRow): ExamQuestionDefinition {
   };
 }
 
+function seededOrder<T extends { id: string }>(
+  items: readonly T[],
+  seed: string,
+): T[] {
+  return [...items].sort((left, right) => {
+    const leftHash = createHash("sha256")
+      .update(`${seed}:${left.id}`)
+      .digest("hex");
+    const rightHash = createHash("sha256")
+      .update(`${seed}:${right.id}`)
+      .digest("hex");
+    return leftHash.localeCompare(rightHash);
+  });
+}
+
+function questionObjectiveKey(questionId: string): string {
+  return questionId.replace(/-v\d+$/, "");
+}
+
+export function assembleExamQuestions(input: {
+  candidates: readonly QuestionCandidate[];
+  difficulty: number;
+  previousQuestionIds?: ReadonlySet<string>;
+  seed: string;
+}): QuestionCandidate[] {
+  const blueprint = EXAM_DIFFICULTY_BLUEPRINTS[input.difficulty];
+  if (!blueprint) {
+    throw new AppError("Exam difficulty is invalid.", 400, "INVALID_DIFFICULTY");
+  }
+
+  const previous = input.previousQuestionIds ?? new Set<string>();
+  const selected: QuestionCandidate[] = [];
+  const selectedIds = new Set<string>();
+  const objectiveCounts = new Map<string, number>();
+
+  function selectFromPool(
+    pool: readonly QuestionCandidate[],
+    target: number,
+  ): void {
+    for (const allowedExistingCount of [0, 1]) {
+      for (const question of pool) {
+        if (selected.length >= target || selectedIds.has(question.id)) continue;
+        const objectiveKey = questionObjectiveKey(question.id);
+        if (
+          (objectiveCounts.get(objectiveKey) ?? 0) !== allowedExistingCount
+        ) {
+          continue;
+        }
+        selected.push(question);
+        selectedIds.add(question.id);
+        objectiveCounts.set(objectiveKey, allowedExistingCount + 1);
+      }
+    }
+  }
+
+  for (let difficulty = 1; difficulty <= blueprint.length; difficulty += 1) {
+    const target = blueprint[difficulty - 1];
+    const candidates = input.candidates.filter(
+      (question) => question.difficulty === difficulty,
+    );
+    const unseen = seededOrder(
+      candidates.filter((question) => !previous.has(question.id)),
+      `${input.seed}:difficulty:${difficulty}:unseen`,
+    );
+    const seen = seededOrder(
+      candidates.filter((question) => previous.has(question.id)),
+      `${input.seed}:difficulty:${difficulty}:seen`,
+    );
+    const selectionTarget = selected.length + target;
+    selectFromPool(unseen, selectionTarget);
+    selectFromPool(seen, selectionTarget);
+  }
+
+  if (selected.length < ASSESSMENT_QUESTION_COUNT) {
+    const unseenRemaining = seededOrder(
+      input.candidates.filter((question) => !selectedIds.has(question.id)),
+      `${input.seed}:remainder:unseen`,
+    ).filter((question) => !previous.has(question.id));
+    const seenRemaining = seededOrder(
+      input.candidates.filter((question) => !selectedIds.has(question.id)),
+      `${input.seed}:remainder:seen`,
+    ).filter((question) => previous.has(question.id));
+    selectFromPool(
+      unseenRemaining,
+      ASSESSMENT_QUESTION_COUNT,
+    );
+    selectFromPool(
+      seenRemaining,
+      ASSESSMENT_QUESTION_COUNT,
+    );
+  }
+
+  if (selected.length !== ASSESSMENT_QUESTION_COUNT) {
+    throw new AppError(
+      `This certification needs ${ASSESSMENT_QUESTION_COUNT} available questions before an assessment can start.`,
+      409,
+      "INSUFFICIENT_EXAM_QUESTIONS",
+    );
+  }
+
+  return seededOrder(selected, `${input.seed}:final`);
+}
+
 export function startExam(
   db: AppDatabase,
   input: {
@@ -98,16 +218,14 @@ export function startExam(
     throw new AppError("Certification not found.", 404, "CERTIFICATION_NOT_FOUND");
   }
 
-  const questions = db
+  const candidates = db
     .prepare(`
-      SELECT id
+      SELECT id, difficulty
       FROM exam_questions
-      WHERE certification_code = ? AND difficulty <= ?
-      ORDER BY difficulty DESC, question_type DESC, id
-      LIMIT 20
+      WHERE certification_code = ? AND active = 1
     `)
-    .all(input.certificationCode, input.difficulty) as Array<{ id: string }>;
-  if (questions.length === 0) {
+    .all(input.certificationCode) as QuestionCandidate[];
+  if (candidates.length === 0) {
     throw new AppError(
       "No practice questions are available for this configuration.",
       409,
@@ -116,6 +234,27 @@ export function startExam(
   }
 
   const attemptId = randomUUID();
+  const previousQuestions = db
+    .prepare(`
+      SELECT aq.question_id AS id
+      FROM exam_attempt_questions aq
+      WHERE aq.attempt_id = (
+        SELECT id
+        FROM exam_attempts
+        WHERE user_id = ? AND certification_code = ?
+        ORDER BY started_at DESC, id DESC
+        LIMIT 1
+      )
+    `)
+    .all(input.userId, input.certificationCode) as Array<{ id: string }>;
+  const questions = assembleExamQuestions({
+    candidates,
+    difficulty: input.difficulty,
+    previousQuestionIds: new Set(
+      previousQuestions.map((question) => question.id),
+    ),
+    seed: attemptId,
+  });
   const now = (input.now ?? new Date()).toISOString();
   const create = db.transaction(() => {
     db.prepare(`

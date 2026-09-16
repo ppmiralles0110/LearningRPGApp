@@ -2,15 +2,15 @@
 
 LevelUp Architect is a local-first, RPG-style adaptive learning platform for Cloud Solution Architects. It removes the daily decision of what to study by combining focus areas, prerequisites, demonstrated mastery, quiz accuracy, confidence, available time, and certification goals into a concrete next quest.
 
-The repository contains a complete end-to-end MVP: secure local accounts, onboarding, adaptive daily/weekly/monthly quests, idempotent XP, levels and tiers, achievements, streaks, skill tracking, certification readiness, timed practice exams, remediation, and a mentor that works without a paid AI service.
+The repository contains a complete end-to-end MVP: secure local accounts, onboarding, adaptive daily/weekly/monthly quests, idempotent XP, levels and tiers, achievements, streaks, skill tracking, certification readiness and evidence, 60-question practice assessments, remediation, and a mentor that works without a paid AI service.
 
 ## What works now
 
 - **Authentication and roles:** scrypt password hashing, opaque database-backed sessions, HTTP-only cookies, login throttling, origin checks, and learner/content-reviewer/administrator role support.
 - **Adaptive campaign:** ranked focus areas, confidence, 30/45/60-minute study windows, prerequisite gating, weakness/accuracy weighting, and deterministic quest selection.
-- **Quest engine:** daily reading + lab + quiz missions, weekly boss battles, monthly raids, official GitHub/Microsoft resources, evidence/reflection capture, and persisted step progress.
+- **Quest engine:** daily reading + lab + quiz missions, weekly boss battles, monthly raids, official GitHub/Microsoft resources, four-checkpoint guided hands-on field manuals, evidence/reflection capture, and persisted checkpoint/step progress.
 - **Progression:** levels 1–100, seven named tiers, configurable XP sources, immutable XP ledger, idempotent completion, daily/weekly/monthly streaks, milestone bonuses, and six seeded achievements.
-- **Skill and certification intelligence:** mastery/confidence/accuracy heatmap, ten requested certification paths, calculated readiness, timed practice attempts, scenario and case-study questions, weak-topic analysis, and answer remediation.
+- **Skill and certification intelligence:** mastery/confidence/accuracy heatmap, ten requested certification paths, calculated readiness, owner-only certificate uploads, and 60-question timed assessments assembled from 100-question rotating banks with weak-topic remediation.
 - **Personal mentor:** deterministic local `The Guide` persona grounded in current progress, with an optional explicitly configured OpenAI-compatible provider.
 - **Operations:** SQLite migration/seed layer, Docker and Compose, devcontainer/Codespaces, CI, CodeQL, Dependabot, issue forms, and deployment guidance.
 
@@ -67,6 +67,7 @@ The named `levelup-data` volume persists SQLite data across container restarts.
 |---|---:|---|
 | `AUTH_SECRET` | Production | At least 32 characters; protects persisted session-token hashes |
 | `DATABASE_PATH` | No | SQLite path; defaults to `./data/levelup-architect.db` |
+| `CERTIFICATE_UPLOAD_DIR` | No | Private certificate file directory; defaults to `./data/certificates` |
 | `SESSION_COOKIE_SECURE` | No | `false` for local HTTP; `true` for hosted HTTPS |
 | `MENTOR_PROVIDER` | No | `local` (default) or `openai-compatible` |
 | `MENTOR_API_URL` | For external mentor | Full chat-completions-compatible endpoint |
@@ -121,6 +122,8 @@ docs/                   Product, technical, engine, roadmap, and deployment docs
 - Only session-token hashes are persisted.
 - State-changing JSON APIs validate origin and Zod request schemas.
 - XP event keys are unique per learner; quest step completion and rewards are atomic.
+- Certificate proof accepts magic-byte-validated PDF/PNG/JPEG/WebP files up to 8 MB, is downloaded as an attachment, and is authorized by owner.
+- Uploaded proof is learner-attested local evidence, not third-party credential verification. Certification XP is awarded only once per supported credential.
 - External links are official seeded resources. No brittle scraping is used.
 - Challenge evidence is learner-attested in the MVP. GitHub API verification is an interface, not a claimed live capability.
 - SQLite is suitable for local/single-instance operation. Multi-instance production requires PostgreSQL before horizontal scaling.

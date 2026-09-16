@@ -1,9 +1,9 @@
 import type {
   CertificationDefinition,
   DomainSlug,
-  ExamQuestionDefinition,
   QuestTemplate,
 } from "@/lib/domain/types";
+export { examQuestions } from "@/lib/domain/question-bank";
 
 export const domains: Array<{
   slug: DomainSlug;
@@ -136,7 +136,7 @@ function dailyQuest(input: {
   };
 }
 
-export const questTemplates: QuestTemplate[] = [
+const questTemplateDefinitions: QuestTemplate[] = [
   dailyQuest({
     id: "github-collaboration-basics",
     domain: "github-fundamentals",
@@ -590,6 +590,122 @@ export const questTemplates: QuestTemplate[] = [
   },
 ];
 
+const guideProfiles: Record<
+  DomainSlug,
+  {
+    prepare: string;
+    validate: string;
+    evidence: string;
+  }
+> = {
+  "github-fundamentals": {
+    prepare: "Use a disposable practice repository and confirm you can create branches and pull requests without changing production code.",
+    validate: "Inspect the commit history and pull request timeline; confirm the change was reviewed on a branch before merge.",
+    evidence: "Capture the repository URL and summarize the branch, commit, review, and merge sequence.",
+  },
+  "github-administration": {
+    prepare: "Create a worksheet with separate enterprise, organization, repository, team, and external-collaborator scopes.",
+    validate: "Test each proposed role or policy against least privilege, emergency bypass, ownership, and audit requirements.",
+    evidence: "Record the decision matrix, assumptions, exceptions, and the person responsible for periodic review.",
+  },
+  "github-actions": {
+    prepare: "Use a disposable repository, inspect the current default-branch rules, and create the workflow on a feature branch.",
+    validate: "Run the workflow, inspect every job, verify declared token permissions, and confirm third-party actions use immutable references.",
+    evidence: "Save the workflow run URL and note the permissions, dependency controls, artifacts, and any failed run you corrected.",
+  },
+  "github-advanced-security": {
+    prepare: "Choose a public sample or disposable repository and identify the alert, dependency, secret, or data flow being assessed.",
+    validate: "Confirm the finding and remediation with the relevant scan, path explanation, dependency review, or regression test.",
+    evidence: "Capture the finding, affected path, risk, remediation, verification result, and any justified residual risk.",
+  },
+  "github-copilot": {
+    prepare: "Choose a sample repository, inventory its architecture and validation commands, and exclude secrets or sensitive data.",
+    validate: "Use the instructions in a realistic Copilot request, inspect the response against repository conventions, and run the stated checks.",
+    evidence: "Save the instruction file plus one before-and-after prompt example showing what became more accurate or actionable.",
+  },
+  "azure-ai-foundry": {
+    prepare: "Define the workload, representative inputs, required regions, quality threshold, safety boundary, latency target, and cost ceiling.",
+    validate: "Compare candidates using the same evaluation set and record quality, safety, latency, availability, and cost evidence.",
+    evidence: "Publish the scored decision matrix, evaluation assumptions, selected option, rejected options, and reevaluation trigger.",
+  },
+  "ai-engineering": {
+    prepare: "Define users, expected behavior, representative data, measurable acceptance criteria, and failure categories before building.",
+    validate: "Run happy-path, edge, and adversarial cases; record groundedness, task completion, latency, errors, and operational gaps.",
+    evidence: "Package the implementation or design with evaluation results, architecture decisions, known limitations, and next actions.",
+  },
+  "ai-security": {
+    prepare: "Draw the data flow and mark identities, data stores, retrieval sources, models, tools, external systems, and trust boundaries.",
+    validate: "Exercise realistic abuse cases for prompt injection, data disclosure, excessive agency, unsafe output, and monitoring gaps.",
+    evidence: "Record each threat, exploit preconditions, impact, existing control, recommended control, owner, and verification method.",
+  },
+  "responsible-ai": {
+    prepare: "Identify intended users, affected stakeholders, high-impact decisions, foreseeable misuse, and groups requiring separate evaluation.",
+    validate: "Assess fairness, reliability, privacy, transparency, accessibility, human oversight, and escalation with measurable evidence.",
+    evidence: "Document harms, severity, mitigations, accountable owners, monitoring signals, user communication, and review cadence.",
+  },
+  "microsoft-security-ai": {
+    prepare: "Inventory workload identities, data classifications, network paths, secrets, model endpoints, tools, logs, and administrative roles.",
+    validate: "Check least privilege, managed identity, private connectivity, key management, content safety, detection, and incident-response coverage.",
+    evidence: "Produce a control matrix with control owner, implementation state, evidence source, validation frequency, and open risk.",
+  },
+};
+
+function withGuidedSteps(template: QuestTemplate): QuestTemplate {
+  const profile = guideProfiles[template.domain];
+  return {
+    ...template,
+    steps: template.steps.map((step) => {
+      if (
+        !["lab", "challenge", "boss_battle", "raid"].includes(step.type)
+      ) {
+        return step;
+      }
+      return {
+        ...step,
+        guide: {
+          introduction: `Complete each checkpoint in order. This ${template.challengeMode} guide records progress locally; external repository or cloud verification remains an explicit future integration.`,
+          checkpoints: [
+            {
+              id: "prepare",
+              title: "Prepare a safe workspace",
+              instructions: profile.prepare,
+              successCriteria:
+                "The workspace, scope, constraints, and acceptance criteria are written down before implementation begins.",
+              hint: "Prefer a disposable repository, sample tenant, or architecture worksheet when production access is unnecessary.",
+            },
+            {
+              id: "execute",
+              title: "Build the required artifact",
+              instructions: step.instructions,
+              successCriteria:
+                "The requested artifact exists and addresses every noun and control named in the task.",
+              hint: "Work in small increments and keep assumptions beside the artifact rather than relying on memory.",
+            },
+            {
+              id: "validate",
+              title: "Validate the outcome",
+              instructions: profile.validate,
+              successCriteria:
+                "Validation evidence demonstrates both the expected behavior and at least one relevant failure or edge case.",
+              hint: "A successful command, scan, evaluation table, or peer-review checklist is stronger than visual inspection alone.",
+            },
+            {
+              id: "document",
+              title: "Capture evidence and reflection",
+              instructions: profile.evidence,
+              successCriteria:
+                "The evidence is reviewable by another architect and includes one lesson or next improvement.",
+              hint: "Remove secrets and sensitive tenant data before linking evidence.",
+            },
+          ],
+        },
+      };
+    }),
+  };
+}
+
+export const questTemplates = questTemplateDefinitions.map(withGuidedSteps);
+
 export const achievements = [
   {
     code: "first-lab",
@@ -721,122 +837,3 @@ export const certifications: CertificationDefinition[] = [
     officialUrl: "https://learn.microsoft.com/en-us/credentials/certifications/azure-solutions-architect/",
   },
 ];
-
-const certificationQuestionTopics: Record<
-  string,
-  {
-    domain: DomainSlug;
-    scenario: string;
-    correct: string;
-    distractors: [string, string, string];
-    explanation: string;
-  }
-> = {
-  "AZ-900": {
-    domain: "ai-engineering",
-    scenario: "A workload must automatically add capacity as demand increases.",
-    correct: "Elasticity",
-    distractors: ["Capital expenditure", "Single tenancy", "Manual provisioning"],
-    explanation: "Elasticity is the ability to add and remove resources in response to demand.",
-  },
-  "GH-FOUNDATIONS": {
-    domain: "github-fundamentals",
-    scenario: "A team wants every change reviewed before it reaches the default branch.",
-    correct: "Require pull request reviews with a branch ruleset",
-    distractors: ["Delete the default branch", "Share one owner account", "Disable commits"],
-    explanation: "A ruleset can require reviewed pull requests while preserving normal collaboration.",
-  },
-  "AI-900": {
-    domain: "responsible-ai",
-    scenario: "A model performs materially worse for one user group.",
-    correct: "Assess and mitigate fairness harms",
-    distractors: ["Increase the font size", "Hide evaluation results", "Remove monitoring"],
-    explanation: "Fairness analysis measures and mitigates quality disparities across relevant groups.",
-  },
-  "SC-900": {
-    domain: "microsoft-security-ai",
-    scenario: "An administrator grants only the access required for a job function.",
-    correct: "Least privilege",
-    distractors: ["Shared responsibility", "Defense in depth", "High availability"],
-    explanation: "Least privilege limits access to the minimum needed.",
-  },
-  "GH-ADMIN": {
-    domain: "github-administration",
-    scenario: "An enterprise needs consistent branch policy across many organizations.",
-    correct: "Create centrally managed organization or enterprise rulesets",
-    distractors: ["Ask users to remember the policy", "Disable audit logging", "Use personal repositories"],
-    explanation: "Rulesets provide scalable, enforceable policy with controlled bypass behavior.",
-  },
-  "GH-COPILOT": {
-    domain: "github-copilot",
-    scenario: "A team wants Copilot responses aligned with repository conventions.",
-    correct: "Add concise repository custom instructions",
-    distractors: ["Commit API keys to prompts", "Skip code review", "Disable tests"],
-    explanation: "Custom instructions provide persistent repository-specific context.",
-  },
-  "AZ-204": {
-    domain: "ai-engineering",
-    scenario: "An Azure application needs to access Key Vault without stored credentials.",
-    correct: "Use a managed identity with scoped Key Vault access",
-    distractors: ["Embed a password in source", "Use anonymous access", "Put the secret in a URL"],
-    explanation: "Managed identities avoid application-managed credentials and support Azure RBAC.",
-  },
-  "AI-102": {
-    domain: "azure-ai-foundry",
-    scenario: "An AI team must compare model quality before deployment.",
-    correct: "Run representative evaluations with defined quality and safety metrics",
-    distractors: ["Choose the model with the longest name", "Test only one happy path", "Ignore latency and cost"],
-    explanation: "Representative evaluation provides evidence for model and configuration choices.",
-  },
-  "GH-ADV-SECURITY": {
-    domain: "github-advanced-security",
-    scenario: "A CodeQL alert shows untrusted input reaching a database query.",
-    correct: "Trace the path, parameterize the query, and add a regression test",
-    distractors: ["Dismiss every alert", "Make the repository public", "Disable code scanning"],
-    explanation: "Validate the flow, remediate the vulnerable sink, and preserve the fix with a test.",
-  },
-  "AZ-305": {
-    domain: "microsoft-security-ai",
-    scenario: "A business-critical service must survive a regional outage.",
-    correct: "Design a tested multi-region recovery strategy based on RTO and RPO",
-    distractors: ["Use one larger virtual machine", "Disable backups", "Rely on manual memory"],
-    explanation: "Recovery objectives drive architecture, replication, failover, and testing decisions.",
-  },
-};
-
-export const examQuestions: ExamQuestionDefinition[] = certifications.flatMap(
-  (certification) => {
-    const topic = certificationQuestionTopics[certification.code];
-    return [
-      {
-        id: `${certification.code.toLowerCase()}-scenario-1`,
-        certificationCode: certification.code,
-        type: "scenario" as const,
-        difficulty: 2,
-        domain: topic.domain,
-        prompt: `${topic.scenario} Which response is best?`,
-        options: [topic.correct, ...topic.distractors],
-        answer: 0,
-        explanation: topic.explanation,
-      },
-      {
-        id: `${certification.code.toLowerCase()}-case-1`,
-        certificationCode: certification.code,
-        type: "case_study" as const,
-        difficulty: 3,
-        domain: topic.domain,
-        caseContext:
-          "Contoso is standardizing its cloud architecture. The proposed solution must be secure, support repeatable operations, and produce reviewable evidence.",
-        prompt: `Which recommendation best applies the core ${certification.name} objective in this scenario?`,
-        options: [
-          topic.correct,
-          topic.distractors[1],
-          topic.distractors[2],
-          topic.distractors[0],
-        ],
-        answer: 0,
-        explanation: topic.explanation,
-      },
-    ];
-  },
-);

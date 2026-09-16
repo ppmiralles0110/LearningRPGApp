@@ -52,6 +52,11 @@ interface CompletionRow {
   completed_at: string;
 }
 
+interface GuideCheckpointRow {
+  step_id: string;
+  checkpoint_id: string;
+}
+
 export interface QuestView {
   id: string;
   templateId: string;
@@ -218,11 +223,34 @@ export function getQuest(
   const completionByStep = new Map(
     completions.map((completion) => [completion.step_id, completion]),
   );
+  const guideCheckpoints = db
+    .prepare(`
+      SELECT step_id, checkpoint_id
+      FROM quest_guide_checkpoints
+      WHERE quest_id = ?
+    `)
+    .all(questId) as GuideCheckpointRow[];
+  const completedCheckpointIds = new Set(
+    guideCheckpoints.map(
+      (checkpoint) => `${checkpoint.step_id}:${checkpoint.checkpoint_id}`,
+    ),
+  );
   const templateSteps = JSON.parse(row.steps_json) as QuestStep[];
   const steps = templateSteps.map((step) => {
     const completion = completionByStep.get(step.id);
     return {
       ...step,
+      guide: step.guide
+        ? {
+            ...step.guide,
+            checkpoints: step.guide.checkpoints.map((checkpoint) => ({
+              ...checkpoint,
+              completed: completedCheckpointIds.has(
+                `${step.id}:${checkpoint.id}`,
+              ),
+            })),
+          }
+        : undefined,
       completed: Boolean(completion),
       score: completion?.score ?? null,
       completedAt: completion?.completed_at ?? null,
@@ -532,6 +560,16 @@ export function completeQuestStep(
     if (step.completed) {
       return { xpAwarded: 0, alreadyCompleted: true };
     }
+    if (
+      step.guide &&
+      step.guide.checkpoints.some((checkpoint) => !checkpoint.completed)
+    ) {
+      throw new AppError(
+        "Complete every guided checkpoint before finishing this hands-on step.",
+        409,
+        "GUIDE_CHECKPOINTS_INCOMPLETE",
+      );
+    }
 
     let quizCorrect: boolean | null = null;
     let score: number | null = null;
@@ -624,6 +662,87 @@ export function completeQuestStep(
     ...result,
     quest: getQuest(db, input.userId, input.questId),
   };
+}
+
+export function setQuestGuideCheckpoint(
+  db: AppDatabase,
+  input: {
+    userId: string;
+    questId: string;
+    stepId: string;
+    checkpointId: string;
+    completed: boolean;
+    date?: Date;
+  },
+): QuestView {
+  const update = db.transaction(() => {
+    const quest = getQuest(db, input.userId, input.questId);
+    const step = quest.steps.find((candidate) => candidate.id === input.stepId);
+    if (!step) {
+      throw new AppError("Quest step not found.", 404, "QUEST_STEP_NOT_FOUND");
+    }
+    if (step.completed) {
+      throw new AppError(
+        "Completed quest steps cannot be changed.",
+        409,
+        "QUEST_STEP_ALREADY_COMPLETED",
+      );
+    }
+    if (!step.guide) {
+      throw new AppError(
+        "This quest step does not have a guided checklist.",
+        404,
+        "QUEST_GUIDE_NOT_FOUND",
+      );
+    }
+
+    const checkpointIndex = step.guide.checkpoints.findIndex(
+      (checkpoint) => checkpoint.id === input.checkpointId,
+    );
+    if (checkpointIndex < 0) {
+      throw new AppError(
+        "Guided checkpoint not found.",
+        404,
+        "QUEST_CHECKPOINT_NOT_FOUND",
+      );
+    }
+
+    if (input.completed) {
+      const priorIncomplete = step.guide.checkpoints
+        .slice(0, checkpointIndex)
+        .some((checkpoint) => !checkpoint.completed);
+      if (priorIncomplete) {
+        throw new AppError(
+          "Complete the earlier checkpoints first.",
+          409,
+          "QUEST_CHECKPOINT_OUT_OF_ORDER",
+        );
+      }
+      db.prepare(`
+        INSERT OR IGNORE INTO quest_guide_checkpoints(
+          quest_id, step_id, checkpoint_id, completed_at
+        ) VALUES (?, ?, ?, ?)
+      `).run(
+        quest.id,
+        step.id,
+        input.checkpointId,
+        (input.date ?? new Date()).toISOString(),
+      );
+    } else {
+      const checkpointIds = step.guide.checkpoints
+        .slice(checkpointIndex)
+        .map((checkpoint) => checkpoint.id);
+      const placeholders = checkpointIds.map(() => "?").join(",");
+      db.prepare(`
+        DELETE FROM quest_guide_checkpoints
+        WHERE quest_id = ? AND step_id = ?
+          AND checkpoint_id IN (${placeholders})
+      `).run(quest.id, step.id, ...checkpointIds);
+    }
+  });
+
+  update();
+  return getQuest(db, input.userId, input.questId);
 }
 
 export function updateChallenge(
